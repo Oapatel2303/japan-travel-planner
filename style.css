@@ -1,0 +1,16 @@
+/* 1. Target the entire body of the page */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5; /* A very light grey */
+    padding: 20px;
+}
+
+/* 2. Target ALL <div> tags to make them look like cards */
+.locations {
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 8px; /* Rounds the corners */
+    padding: 15px; /* Space inside the box */
+    margin-bottom: 20px; /* Space outside the box, pushing the next card down */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Adds a tiny drop shadow */
+}
