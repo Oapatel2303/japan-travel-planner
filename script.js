@@ -4,27 +4,19 @@ console.log("Japan Travel Planner Engine Initilized");
 //also counting # of location cards based on div id
 let mySavedSpots = document.querySelectorAll('.locations');
 
-// 1. STATE: Our "Database" (Mutable Array of Objects)
-let travelLocations = [
-    {
-        name: "Shibuya Station",
-        category: "Anime Landmark (JJK)",
-        notes: "Need to find the specific exit from the Shibuya Incident arc. Check for construction.",
-        visited: false
-    },
-    {
-        name: "T's Tantan (Tokyo Station)",
-        category: "Ovo-Vegetarian",
-        notes: "Famous vegan ramen spot. Located inside the Keiyo Street area of the station.",
-        visited: false
-    },
-    {
-        name: "Daikoku Futo PA",
-        category: "Motorcycle & Car Scene",
-        notes: "Legendary car meet spot. Need to figure out transportation.",
-        visited: false
-    }
-];
+let savedData = localStorage.getItem('myJapanTrip');
+let travelLocations;
+
+if (savedData){
+    travelLocations = JSON.parse(savedData);
+} else {
+    // If it's null (first time user), load the default hardcoded data
+    travelLocations = [
+        { name: "Shibuya Station", category: "Anime Landmark (JJK)", notes: "Need to find the specific exit from the Shibuya Incident arc.", visited: false },
+        { name: "T's Tantan (Tokyo Station)", category: "Ovo-Vegetarian", notes: "Famous vegan ramen spot inside Keiyo Street.", visited: false },
+        { name: "Daikoku Futo PA", category: "Motorcycle & Car Scene", notes: "Legendary car meet spot.", visited: false }
+    ];
+}
 
 // 2. DOM REFERENCES: Grabbing our main HTML anchors
 let container = document.getElementById('locations-container');
@@ -33,6 +25,9 @@ let addButton = document.getElementById('add-btn');
 // 3. THE RENDER LOOP: Wipes the screen and redraws based on State
 function renderLocations() {
     
+    //Save current state to hard drive
+    localStorage.setItem('myJapanTrip', JSON.stringify(travelLocations));
+
     // Create an empty string to hold all our generated HTML
     let allHTML = "";
 
