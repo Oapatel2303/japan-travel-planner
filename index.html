@@ -5,8 +5,34 @@
 <body>
     <h1>Travel Planner Dashboard</h1>
 
-    <div id="page-dashboard" style="display: block;">
+    <div id="page-welcome" style="display: block; text-align: center; margin-top: 50px;">
+        <h2 style="font-size: 2em; margin-bottom: 5px;">welcome to my itinerary planner</h2>
+        <p style="color: gray; margin-bottom: 30px;">built by ohm patel</p>
+        
+        <div>
+            <button id="btn-new-trip" style="background-color: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 10px;">new itinerary</button>
+            <button id="btn-load-trips" style="background-color: #2196F3; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 10px;">load planners</button>
+        </div>
+
+        <div id="new-trip-modal" style="display: none; background-color: white; border: 1px solid #ccc; padding: 20px; border-radius: 8px; width: 300px; margin: 30px auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0;">create new trip</h3>
+            
+            <input type="text" id="modal-trip-name" placeholder="trip name (ex. kyoto fall)" style="width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box;">
+            <input type="text" id="modal-trip-dates" placeholder="dates (ex. nov 2026)" style="width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box;">
+            
+            <p style="font-size: 12px; color: gray; margin-bottom: 5px; text-align: left;">categories of interest (comma separated):</p>
+            <input type="text" id="modal-trip-cats" placeholder="ex. shrines, vegan food, arcades" style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box;">
+            
+            <div style="display: flex; justify-content: space-between;">
+                <button id="modal-cancel-btn" style="background-color: #ff4d4d; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">cancel</button>
+                <button id="modal-create-btn" style="background-color: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">create</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-dashboard" style="display: none;">
         <h2>your saved trips</h2>
+        <button id="btn-home" style="margin-bottom: 20px; padding: 5px 10px;"><- back to home</button>
         <div id="trip-list-container"></div>
 
         <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px;">

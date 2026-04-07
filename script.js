@@ -15,7 +15,7 @@ let masterTripsArray;
 if (savedMaster) {
     masterTripsArray = JSON.parse(savedMaster);
 } else {
-    // hardcoding the test dummies (japan and france) so we can prove the filter works
+    // hardcoding the test dummies (japan and france) to prove the filter works
     masterTripsArray = [
         {
             id: "trip_japan",
@@ -46,18 +46,95 @@ if (savedMaster) {
     ];
 }
 
-// grab the html anchor points for routing
+// 1. GRAB ALL HTML ELEMENTS
+let pageWelcome = document.getElementById('page-welcome');
 let pageDashboard = document.getElementById('page-dashboard');
 let pagePlanner = document.getElementById('page-planner');
 let tripListContainer = document.getElementById('trip-list-container');
-let btnBack = document.getElementById('btn-back');
 let currentTripTitle = document.getElementById('current-trip-title');
 
-// back button logic
+let btnNewTrip = document.getElementById('btn-new-trip');
+let btnLoadTrips = document.getElementById('btn-load-trips');
+let btnBack = document.getElementById('btn-back');
+let btnHome = document.getElementById('btn-home');
+
+let newTripModal = document.getElementById('new-trip-modal');
+let modalCancel = document.getElementById('modal-cancel-btn');
+let modalCreate = document.getElementById('modal-create-btn');
+
+
+// 2. SPA ROUTER LOGIC
 btnBack.addEventListener('click', function() {
-    pagePlanner.style.display = 'none'; // hide planner
-    pageDashboard.style.display = 'block'; // show dashboard
-    activeTripId = null; // clear the active state so nothing accidentally saves to the wrong folder
+    pagePlanner.style.display = 'none'; 
+    pageDashboard.style.display = 'block'; 
+    activeTripId = null; 
+
+    // force redraw screen when new itinerary is built
+    renderDashboard();
+});
+
+btnHome.addEventListener('click', function() {
+    pageDashboard.style.display = 'none';
+    pageWelcome.style.display = 'block';
+});
+
+btnLoadTrips.addEventListener('click', function() {
+    pageWelcome.style.display = 'none';
+    pageDashboard.style.display = 'block';
+
+    // just incase of user adds trip, goes home, and then back to loaded screen.
+    renderDashboard();
+});
+
+btnNewTrip.addEventListener('click', function() {
+    newTripModal.style.display = 'block';
+});
+
+modalCancel.addEventListener('click', function() {
+    newTripModal.style.display = 'none';
+});
+
+
+// 3. FACTORY LOGIC (CREATING A FOLDER)
+modalCreate.addEventListener('click', function() {
+    let rawName = document.getElementById('modal-trip-name').value;
+    let rawDates = document.getElementById('modal-trip-dates').value;
+    let rawCats = document.getElementById('modal-trip-cats').value;
+
+    if (rawName.trim() === "") {
+        alert("yo you need to name the trip first!");
+        return;
+    }
+
+    let processedCategories = [];
+    if (rawCats.trim() !== "") {
+        let splitArray = rawCats.split(',');
+        for (let i = 0; i < splitArray.length; i++) {
+            let cleanCatName = splitArray[i].trim();
+            if (cleanCatName !== "") {
+                processedCategories.push({ name: cleanCatName, checked: false });
+            }
+        }
+    }
+
+    let newFolder = {
+        id: "trip_" + Date.now(),
+        name: rawName,
+        dates: rawDates,
+        categories: processedCategories,
+        locations: [] 
+    };
+
+    masterTripsArray.push(newFolder);
+    localStorage.setItem('myMasterTrips', JSON.stringify(masterTripsArray));
+
+    document.getElementById('modal-trip-name').value = "";
+    document.getElementById('modal-trip-dates').value = "";
+    document.getElementById('modal-trip-cats').value = "";
+    newTripModal.style.display = 'none';
+
+    pageWelcome.style.display = 'none';
+    openTrip(newFolder.id); 
 });
 
 // draws the trip cards on pg 2
@@ -83,7 +160,7 @@ function renderDashboard() {
 }
 
 // the context switch logic (the magic)
-// we use window. so the inline html onclick button can see it
+// uses window. so the inline html onclick button can see it
 window.openTrip = function(tripId) {
     activeTripId = tripId; // lock in the current trip id
     
@@ -277,7 +354,7 @@ btnImport.addEventListener('click', function() {
         
         alert("trip successfully imported!");
     } catch (error) {
-        alert("bruh that code is invalid or corrupted.");
+        alert("that code is invalid or corrupted.");
         console.error(error);
     }
 });
