@@ -19,9 +19,23 @@ if (savedMaster) {
     // default it to an empty string so the API just safely says "unknown" instead of crashing.
     for (let i = 0; i < masterTripsArray.length; i++) {
         if (!masterTripsArray[i].destination) {
-            masterTripsArray[i].destination = ""; 
+            
+            // hardcoded japan trip fix
+            if (masterTripsArray[i].id === "trip_japan") {
+                masterTripsArray[i].destination = "japan";
+            } 
+            // hardcoded france trip fix
+            else if (masterTripsArray[i].id === "trip_france") {
+                masterTripsArray[i].destination = "france";
+            } 
+            // for any other old trips, make it blank
+            else {
+                masterTripsArray[i].destination = ""; 
+            }
+            
         }
     }
+
 } else {
     // hardcoding the test dummies (japan and france) to prove the filter works
     masterTripsArray = [
