@@ -210,6 +210,7 @@ window.openTrip = function(tripId) {
     renderCategories();
     renderLocations();
     fetchCurrencyRate();
+    loadWeather();
 }
 
 
@@ -511,6 +512,8 @@ addButton.addEventListener('click', function() {
 // ==========================================
 // ENGINE 4: EXTERNAL APIS
 // ==========================================
+
+// currency API
 async function fetchCurrencyRate() {
     if (!activeTripId) return;
     let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
@@ -556,6 +559,88 @@ async function fetchCurrencyRate() {
     } catch (error) {
         console.error("API Error:", error);
         rateTextElement.innerText = "api offline";
+    }
+}
+// weather API
+async function loadWeather() {
+    if (!activeTripId) return;
+    let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
+
+    const weatherText = document.getElementById('weather-text');
+
+    if (!currentTrip || !currentTrip.destination) {
+        weatherText.innerText = "no destination";
+        return;
+    }
+
+    const destination = currentTrip.destination.toLowerCase();
+    weatherText.innerText = "scanning regions..."; 
+
+    // 1. The Geography Brain (Add as many countries as you want here!)
+    const majorCitiesMap = {
+        "japan": ["Tokyo", "Osaka", "Sapporo"],
+        "france": ["Paris", "Lyon", "Marseille"],
+        "italy": ["Rome", "Milan", "Naples"],
+        "usa": ["New York", "Los Angeles", "Chicago"]
+    };
+
+    // If the country is in our map, use the array of cities. Otherwise, just search the country name.
+    let citiesToSearch = majorCitiesMap[destination] || [destination];
+    
+    let finalWeatherHTML = "";
+
+    try {
+        // 2. Loop through each city and fetch data
+        for (let i = 0; i < citiesToSearch.length; i++) {
+            let city = citiesToSearch[i];
+
+            // A. Geocode the specific city
+            let geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+            let geoData = await geoResponse.json();
+
+            if (geoData.results && geoData.results.length > 0) {
+                const lat = geoData.results[0].latitude;
+                const lng = geoData.results[0].longitude;
+
+                // B. Fetch the weather for those coordinates
+                let weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
+                let weatherData = await weatherResponse.json();
+
+                const weatherCode = weatherData.current_weather.weathercode;
+                const tempC = weatherData.current_weather.temperature;
+                const tempF = ((tempC * 9/5) + 32).toFixed(1);
+
+                const weatherMap = {
+                    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+                    45: "🌫️", 48: "🌫️",
+                    51: "🌧️", 53: "🌧️", 55: "🌧️",
+                    61: "🌧️", 63: "🌧️", 65: "🌧️",
+                    71: "🌨️", 73: "🌨️", 75: "🌨️",
+                    95: "⛈️"
+                };
+
+                let emoji = weatherMap[weatherCode] || "🌈";
+
+                // C. Build a clean row for this city
+                finalWeatherHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 6px 0;">
+                        <span style="font-weight: bold; text-transform: capitalize;">${city}</span>
+                        <span>${emoji} ${tempF}°F</span>
+                    </div>
+                `;
+            }
+        }
+
+        // 3. Paint the final list to the screen
+        if (finalWeatherHTML === "") {
+            weatherText.innerText = "weather unavailable";
+        } else {
+            weatherText.innerHTML = finalWeatherHTML;
+        }
+
+    } catch (error) {
+        console.error("Weather API Error:", error);
+        weatherText.innerText = "api offline";
     }
 }
 
