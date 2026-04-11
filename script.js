@@ -301,30 +301,27 @@ function renderLocations() {
 
     for (let i = 0; i < currentTrip.locations.length; i++) {
         let spot = currentTrip.locations[i]; 
-        let cardColor = "white";
-        let buttonText = "mark as visited";
 
-        if (spot.visited === true) {
-            cardColor = "#d4edda";
-            buttonText = "visited!";
-        }
+        let cardColor = spot.visited ? "background-color: rgba(76, 175, 80, 0.15);" : ""; 
+        let buttonText = spot.visited ? "visited!" : "mark as visited";
+
 
         tripTotal += spot.cost || 0; 
 
-        // THIS HTML IS MUCH MORE COMPACT
+        // Removed the hardcoded colors and replaced them with CSS variables
         let cardHTML = `
-            <div class="locations" id="card-${i}" style="background-color: ${cardColor}; padding: 12px; margin-bottom: 12px;">
+            <div class="locations" id="card-${i}" style="${cardColor} padding: 12px; margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
-                    <h3 style="margin: 0; font-size: 1.1em;">${spot.name}</h3>
-                    <span style="font-weight: bold; color: #4CAF50;">$${(spot.cost || 0).toFixed(2)}</span>
+                    <h3 style="margin: 0; font-size: 1.1em; color: var(--text-color);">${spot.name}</h3>
+                    <span style="font-weight: bold; color: var(--success-color);">$${(spot.cost || 0).toFixed(2)}</span>
                 </div>
-                <p style="margin: 2px 0; font-size: 13px; color: #555;"><strong>cat:</strong> ${spot.category}</p>
-                <p style="margin: 2px 0 10px 0; font-size: 13px;"><strong>notes:</strong> ${spot.notes}</p>
+                <p style="margin: 2px 0; font-size: 13px; color: var(--text-color); opacity: 0.8;"><strong>cat:</strong> ${spot.category}</p>
+                <p style="margin: 2px 0 10px 0; font-size: 13px; color: var(--text-color);"><strong>notes:</strong> ${spot.notes}</p>
                 
                 <div style="display: flex; gap: 8px;">
                     <button id="btn-${i}" style="font-size: 12px; padding: 4px 8px;">${buttonText}</button>
-                    <button id="edit-btn-${i}" style="font-size: 12px; padding: 4px 8px; background-color: #ffc107; border: none; border-radius: 3px; cursor: pointer;">edit</button>
-                    <button id="delete-btn-${i}" style="font-size: 12px; padding: 4px 8px; background-color: #ff4d4d; color: white; border: none; border-radius: 3px; cursor: pointer;">delete</button>
+                    <button id="edit-btn-${i}" style="font-size: 12px; padding: 4px 8px; background-color: var(--warning-color); border: none; border-radius: 3px; cursor: pointer; color: black;">edit</button>
+                    <button id="delete-btn-${i}" style="font-size: 12px; padding: 4px 8px; background-color: var(--danger-color); color: white; border: none; border-radius: 3px; cursor: pointer;">delete</button>
                 </div>
             </div>
         `;
@@ -572,6 +569,36 @@ flatpickr("#modal-trip-dates", {
     dateFormat: "M j, Y", // Formats as "Oct 1, 2026 to Oct 15, 2026"
     minDate: "today",     // Prevents users from booking trips in the past
     showMonths: 1         // Shows one month at a time (mobile friendly)
+});
+
+// ==========================================
+// ENGINE 6: DARK MODE TOGGLE
+// ==========================================
+let themeToggleBtn = document.getElementById('theme-toggle');
+
+// 1. Check if they saved a preference previously
+let savedTheme = localStorage.getItem('myAppTheme');
+if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeToggleBtn.innerText = "☀️ Light Mode";
+    themeToggleBtn.style.color = "white";
+}
+
+// 2. Listen for clicks
+themeToggleBtn.addEventListener('click', function() {
+    // Toggle the class on or off
+    document.body.classList.toggle('dark-mode');
+    
+    // Check if it's currently on, and update the button/storage
+    if (document.body.classList.contains('dark-mode')) {
+        themeToggleBtn.innerText = "☀️ Light Mode";
+        themeToggleBtn.style.color = "white";
+        localStorage.setItem('myAppTheme', 'dark');
+    } else {
+        themeToggleBtn.innerText = "🌙 Dark Mode";
+        themeToggleBtn.style.color = "black";
+        localStorage.setItem('myAppTheme', 'light');
+    }
 });
 
 // INITIALIZATION
