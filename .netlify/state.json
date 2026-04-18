@@ -1,0 +1,21 @@
+{
+	"siteId": "f90be3d7-e814-47fa-a192-10215b607e74",
+	"geolocation": {
+		"data": {
+			"city": "Burlington",
+			"country": {
+				"code": "US",
+				"name": "United States"
+			},
+			"subdivision": {
+				"code": "NJ",
+				"name": "New Jersey"
+			},
+			"timezone": "America/New_York",
+			"latitude": 40.0713,
+			"longitude": -74.8449,
+			"postalCode": "08016"
+		},
+		"timestamp": 1776476127037
+	}
+}

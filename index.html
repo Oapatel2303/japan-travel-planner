@@ -4,13 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Travel Planner</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232196F3'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Travel Planner Dashboard</h1>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="38" height="38" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+        </svg>
+        
+        <h1 style="margin: 0;">Travel Planner Dashboard</h1>
+    </div>
 
     <button id="theme-toggle" class="theme-toggle-btn">
         🌙 Dark Mode
@@ -58,7 +65,9 @@
 
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <button id="btn-export" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">export trip code</button>
+            <button id="analyze-btn" class="action-btn">🔍 Analyze My Trip</button>
         </div>
+
         
         <button id="btn-back" class="nav-btn">← back to trips</button>
         
@@ -85,9 +94,7 @@
 
         <hr>
 
-        <div class="mobile-stack" style="display: flex; gap: 30px; align-items: flex-start;">
-            
-            <div style="flex: 1.2;">
+        <div class="mobile-stack" style="display: flex; gap: 30px;"> <div style="flex: 1.2;">
                 <h2>categories to track:</h2>
 
                 <div style="margin-bottom: 15px;">
@@ -122,15 +129,19 @@
                 <div id="locations-container"></div>
             </div>
 
-            <div style="position: relative; flex: 1;">
+            <div style="flex: 1; position: relative;">
                 
-                <div id="transport-toggle" style="position: absolute; top: 10px; left: 60px; z-index: 500; display: flex; background: var(--card-bg); border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); overflow: hidden; border: 1px solid var(--border-color);">
-                    <button class="route-btn route-btn-active" data-mode="car">🚗 Car</button>
-                    <button class="route-btn" data-mode="foot">🚶 Walk</button>
-                    <button class="route-btn" data-mode="bike">🚲 Bike</button>
-                </div>
+                <div class="map-sticky-wrapper">
+                    
+                    <div id="transport-toggle" style="position: absolute; top: 10px; left: 60px; z-index: 500; display: flex; background: var(--card-bg); border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); overflow: hidden; border: 1px solid var(--border-color);">
+                        <button class="route-btn route-btn-active" data-mode="car">🚗 Car</button>
+                        <button class="route-btn" data-mode="foot">🚶 Walk</button>
+                        <button class="route-btn" data-mode="bike">🚲 Bike</button>
+                    </div>
 
-                <div id="map" style="min-height: 600px; width: 100%; border-radius: 8px; border: 2px solid var(--border-color); z-index: 1;"></div>
+                    <div id="map"></div>
+                    
+                </div>
             </div>
 
         </div>

@@ -61,7 +61,7 @@ if (savedMaster) {
             locations: [
                 { name: "shibuya station", day: 1, category: "anime landmark (jjk)", notes: "need to find the specific exit from the shibuya incident arc.", visited: false, cost: 0, lat: 35.6581, lng: 139.7017 },
                 { name: "t's tantan (tokyo station)", day: 2, category: "vegetarian", notes: "famous vegan ramen spot inside keiyo street.", visited: false, cost: 15, lat: 35.6811, lng: 139.7667 },
-                { name: "daikoku futo pa", day: 3, category: "motorcycle & car scene", notes: "legendary car meet spot.", visited: false, cost: 20, lat: 35.4667, lng: 139.6333 }
+                { name: "Daikoku Parking Area, Yokohama", day: 3, category: "motorcycle & car scene", notes: "legendary car meet spot.", visited: false, cost: 20, lat: 35.4667, lng: 139.6333 }
             ]
         },
         {
@@ -1019,21 +1019,30 @@ let aiInput = document.getElementById('ai-user-input');
 let aiSendBtn = document.getElementById('ai-send-btn');
 let aiChatHistory = document.getElementById('ai-chat-history');
 
-// Helper Function: Draws the chat bubbles on the screen
+// Helper Function: Draws the chat bubbles and parses Markdown
 function appendMessage(role, text) {
     let msgDiv = document.createElement('div');
     msgDiv.classList.add('chat-message');
 
     if (role === 'user') {
         msgDiv.classList.add('user-message');
+        // Keep user text as plain text for security
+        msgDiv.innerText = text; 
     } else {
         msgDiv.classList.add('ai-message');
+        
+        // Mini Markdown Parser for the AI's response
+        let formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Converts **text** to bold
+            .replace(/\n/g, '<br>')                           // Converts line breaks
+            .replace(/<br>\* /g, '<br>• ')                    // Converts * to bullet points
+            .replace(/<br>- /g, '<br>• ');                    // Converts - to bullet points
+            
+        // Inject the parsed HTML
+        msgDiv.innerHTML = formattedText;
     }
 
-    msgDiv.innerText = text;
     aiChatHistory.appendChild(msgDiv);
-
-    // Auto-scroll to the newest message at the bottom
     aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
 }
 
@@ -1124,6 +1133,60 @@ aiInput.addEventListener('keypress', function(e) {
         aiSendBtn.click();
     }
 });
+
+// ==========================================
+// ENGINE 10: TRIP ANALYZER
+// ==========================================
+
+async function runTripAnalysis() {
+    // 1. Check if they have a trip open
+    if (!activeTripId) {
+        alert("Please open a trip first!");
+        return;
+    }
+
+    // 2. Grab full data object for current trip
+    let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
+
+    // 3. Make sure they have actually added locations
+    if (!currentTrip.locations || currentTrip.locations.length === 0) {
+        appendMessage("ai", "Your itinerary is empty! Add some spots before I analyze it.");
+        return;
+    }
+
+    // 4. Send a loading message to the chat widget
+    appendMessage("ai", "🔍 Scanning your itinerary for geographic anomalies and pacing issues. Give me a second...");
+
+    try {
+        // 5. Send the entire trip object to Netlify function
+        const response = await fetch("/.netlify/functions/analyze", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                tripData: currentTrip
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            appendMessage("ai", "Oops, my analysis engine hit a snag!");
+            return;
+        }
+
+        // 6. Print the analysis into the chat widget
+        appendMessage("ai", "📊 **ITINERARY ANALYSIS** 📊\n\n" + data.choices[0].message.content);
+
+    } catch (error) {
+        appendMessage("ai", "Sorry, my servers are unreachable right now!");
+        console.error("Analyzer Error:", error);
+    }
+}
+
+// 7. Attach the function to button
+document.getElementById('analyze-btn').addEventListener('click', runTripAnalysis);
 
 // INITIALIZATION
 renderDashboard();

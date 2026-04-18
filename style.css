@@ -205,6 +205,22 @@ input {
     animation: fadeIn 0.4s ease-out; 
 }
 
+/* --- THE STICKY MAP FIX --- */
+.map-sticky-wrapper {
+    position: sticky;
+    top: 20px;
+    height: 85vh; /* Prevents the map from expanding past the screen height */
+    z-index: 10;
+}
+
+#map {
+    width: 100%;
+    height: 100%; /* Tells Leaflet to perfectly fill the 85vh wrapper */
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
 /* ==========================================
    5. MOBILE RESPONSIVENESS
    ========================================== */
@@ -493,4 +509,24 @@ input {
     padding: 0 16px;
     cursor: pointer;
     font-weight: bold;
+}
+
+#analyze-btn {
+    background: linear-gradient(135deg, #8B5CF6, #3B82F6);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px; /* Matches your sleek UI */
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-left: 15px; /* Gives it breathing room from the back button */
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#analyze-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
 }
