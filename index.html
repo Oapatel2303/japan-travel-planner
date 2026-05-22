@@ -15,91 +15,128 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="38" height="38" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
         </svg>
-        
-        <h1 style="margin: 0;">Travel Planner Dashboard</h1>
+        <h1 style="margin: 0;">Travel Planner by Ohm Patel</h1>
     </div>
 
-    <button id="theme-toggle" class="theme-toggle-btn">
-        🌙 Dark Mode
-    </button>
+    <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center; z-index: 10;">
+        <button id="btn-profile" style="display: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); font-weight: bold;">
+            👤 Profile
+        </button>
+        <button id="auth-status-btn" style="padding: 8px 16px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); font-weight: bold;">
+            Log In / Sign Up
+        </button>
+        <button id="theme-toggle" class="theme-toggle-btn">
+            🌙 Dark Mode
+        </button>
+    </div>
+
+    <div id="auth-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 9999; width: 300px;">
+        <h3 style="margin-top: 0; color: var(--accent-color);">Account Access</h3>
+        <input type="email" id="auth-email" placeholder="Email address" style="width: 100%; margin-bottom: 10px; padding: 10px; border-radius: 6px; box-sizing: border-box;">
+        <input type="password" id="auth-password" placeholder="Password (min 6 chars)" style="width: 100%; margin-bottom: 15px; padding: 10px; border-radius: 6px; box-sizing: border-box;">
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-signup" style="background: var(--success-color); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">Create Account</button>
+            <button id="btn-login" style="background: var(--accent-color); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">Log In</button>
+            <button id="btn-close-auth" style="background: transparent; color: var(--text-color); border: none; padding: 5px; cursor: pointer; text-decoration: underline; font-size: 12px;">Cancel</button>
+        </div>
+        <p id="auth-error-msg" style="color: var(--danger-color); font-size: 12px; margin-top: 10px; text-align: center; display: none;"></p>
+    </div>
 
     <div id="page-welcome" class="smooth-transition">
-    <div id="welcome-stage">
-        <div class="glass-card">
-            <h2>welcome to my itinerary planner</h2>
-            <p style="text-align: center; width: 100%; opacity: 0.7;">built by ohm patel</p>
-            <div class="welcome-buttons">
-                <button id="btn-new-trip">new itinerary</button>
-                <button id="btn-load-trips">load planners</button>
+        <div id="welcome-stage">
+            
+            <div class="glass-card" style="max-width: 500px; text-align: center; padding: 30px;">
+                <h2 style="font-size: 2.5em; margin-bottom: 10px;">plan your next escape.</h2>
+                <p style="font-size: 0.95em; opacity: 0.9; margin-bottom: 30px;">the all-in-one smart dashboard for your itineraries, budgets, and maps.</p>
+                <div class="welcome-buttons">
+                    <button id="btn-new-trip">Start New Trip</button>
+                    <button id="btn-load-trips">Load Saved Trips</button>
+                </div>
             </div>
-        </div>
 
-        <div id="new-trip-modal" style="display: none;">
-            <h3>create new trip</h3>
-            <div class="modal-inputs">
-                <input type="text" id="modal-trip-name" placeholder="trip name (ex. kyoto fall)">
-                <input type="text" id="modal-trip-dates" placeholder="dates (ex. nov 2026)">
-                <input type="text" id="modal-trip-dest" placeholder="destination country (ex. japan)">
-                <p class="input-label">categories of interest (comma separated):</p>
-                <input type="text" id="modal-trip-cats" placeholder="ex. shrines, vegan food, arcades">
-            </div>
-            <div class="modal-btns">
-                <button id="modal-cancel-btn">cancel</button>
-                <button id="modal-create-btn">create</button>
+            <div id="new-trip-modal" style="display: none;">
+                <h3>create new trip</h3>
+                <div class="modal-inputs">
+                    <input type="text" id="modal-trip-name" placeholder="trip name (ex. kyoto fall)">
+                    <input type="text" id="modal-trip-dates" placeholder="dates (ex. nov 2026)">
+                    <input type="text" id="modal-trip-dest" placeholder="destination country (ex. japan)">
+                    <p class="input-label">categories of interest (comma separated):</p>
+                    <input type="text" id="modal-trip-cats" placeholder="ex. shrines, vegan food, arcades">
+                </div>
+                <div class="modal-btns">
+                    <button id="modal-cancel-btn">cancel</button>
+                    <button id="modal-create-btn">create</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <div id="page-profile" class="smooth-transition" style="display: none;">
+        <h2>account settings</h2>
+        <button id="btn-back-profile" class="nav-btn" style="margin-bottom: 25px;">← back to dashboard</button>
+
+        <div class="glass-card" style="max-width: 500px; margin: 0 auto; text-align: left; padding: 30px;">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <img id="profile-avatar-preview" src="https://ui-avatars.com/api/?name=User&background=random" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-color); box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            </div>
+
+            <p style="font-size: 13px; color: white; opacity: 0.9; margin-bottom: 15px; text-align: center;">Account: <span id="profile-display-email" style="font-weight: bold;"></span></p>
+
+            <p class="input-label" style="margin-bottom: 5px; color: white;">Username</p>
+            <input type="text" id="profile-username" placeholder="traveler_99" autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+
+            <p class="input-label" style="margin-bottom: 5px; color: white;">Avatar Image URL</p>
+            <input type="text" id="profile-avatar-url" placeholder="https://i.imgur.com/...png" autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+
+            <p class="input-label" style="margin-bottom: 5px; color: white;">Travel Style & Interests</p>
+            <input type="text" id="profile-style" placeholder="ex. Tokyo drift culture, historical sites..." autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+
+            <button id="btn-save-profile" style="width: 100%; margin-top: 20px; background: var(--success-color); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">Save Profile</button>
+        </div>
+    </div>
 
     <div id="page-dashboard" class="smooth-transition" style="display: none;">
         <h2>your saved trips</h2>
         <button id="btn-home" class="nav-btn" style="margin-bottom: 25px;">← back to home</button>
         <div id="trip-list-container"></div>
-
-        <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px;">
-            <button id="btn-import" style="background-color: #4CAF50; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">import trip from code</button>
+        <div style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+            <button id="btn-import" style="background-color: var(--success-color); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">import trip from code</button>
         </div>
     </div>
 
     <div id="page-planner" class="smooth-transition" style="display: none;">
-
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <button id="btn-export" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">export trip code</button>
             <button id="analyze-btn" class="action-btn">🔍 Analyze My Trip</button>
         </div>
-
         
         <button id="btn-back" class="nav-btn">← back to trips</button>
         
         <div class="mobile-stack" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
-            
             <div>
-                <h2 id="current-trip-title" style="color: #2196F3";>loading trip...</h2>
-                <h3 id="budget-display" style="color: #4CAF50; margin-top: 0; margin-bottom: 0;">total spending: $0</h3>
+                <h2 id="current-trip-title" style="color: var(--accent-color);">loading trip...</h2>
+                <h3 id="budget-display" style="color: var(--success-color); margin-top: 0; margin-bottom: 0;">total spending: $0</h3>
             </div>
-
             <div style="display: flex; gap: 15px;">
                 <div style="background-color: var(--card-bg); border: 2px dashed var(--border-color); border-radius: 8px; padding: 10px 20px; min-width: 220px; text-align: left; transition: all 0.3s ease;">
                     <h4 style="margin: 0; color: var(--text-color); text-align: center;">🌤️ regional weather</h4>
                     <div id="weather-text" style="margin: 10px 0 0; font-size: 13px; color: var(--text-color); opacity: 0.9;">api placeholder</div>
                 </div>
-                
                 <div style="background-color: var(--card-bg); border: 2px dashed var(--border-color); border-radius: 8px; padding: 10px 20px; width: 160px; text-align: center; transition: all 0.3s ease;">
                     <h4 style="margin: 0; color: var(--text-color);">💴 currency calc</h4>
                     <p id="currency-rate-text" style="margin: 5px 0 0; font-size: 12px; color: var(--text-color); opacity: 0.7;">api placeholder</p>
                 </div>
             </div>
-
         </div>
-
         <hr>
 
-        <div class="mobile-stack" style="display: flex; gap: 30px;"> <div style="flex: 1.2;">
+        <div class="mobile-stack" style="display: flex; gap: 30px;"> 
+            <div style="flex: 1.2;">
                 <h2>categories to track:</h2>
-
                 <div style="margin-bottom: 15px;">
                     <input type="text" id="new-cat-input" placeholder="new category...">
-                    <button id="add-cat-btn">add</button>
+                    <button id="add-cat-btn" style="padding: 8px 12px; border-radius: 4px; border: none; background: var(--accent-color); color: white; cursor: pointer;">add</button>
                 </div>
                 <ul id="categories-container" style="list-style-type: none; padding-left: 0;"></ul>
                 <hr>
@@ -107,43 +144,32 @@
                 <h2>add/edit location to schedule</h2>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: flex-end;">
                     <input type="text" id="new-name" placeholder="location name" style="flex: 1.5; min-width: 150px;">
-                    
                     <div style="width: 70px;">
-                        <p class="input-label" style="font-size: 11px; margin: 0 0 2px 2px; opacity: 0.7;">Day #</p>
+                        <p class="input-label" style="font-size: 11px; margin: 0 0 2px 2px; opacity: 0.7; color: var(--text-color);">Day #</p>
                         <input type="number" id="new-day" placeholder="ex. 1" min="1" value="1" style="width: 100%;">
                     </div>
-
                     <input type="text" id="new-category" placeholder="category" style="flex: 1; min-width: 100px;">
                     <input type="text" id="new-notes" placeholder="notes" style="flex: 2; min-width: 200px;">
                     <input type="number" id="new-price" placeholder="price ($)" style="width: 80px;">
-                    
-                    <button id="add-btn" style="background-color: #4CAF50; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">save location</button>
+                    <button id="add-btn" style="background-color: var(--success-color); color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">save location</button>
                 </div>
-
                 <hr>
                 
-                <div id="day-navigation" class="smooth-transition" style="display: flex; gap: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-                    </div>
-
+                <div id="day-navigation" class="smooth-transition" style="display: flex; gap: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap;"></div>
                 <h2>saved locations</h2>
                 <div id="locations-container"></div>
             </div>
 
             <div style="flex: 1; position: relative;">
-                
                 <div class="map-sticky-wrapper">
-                    
                     <div id="transport-toggle" style="position: absolute; top: 10px; left: 60px; z-index: 500; display: flex; background: var(--card-bg); border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); overflow: hidden; border: 1px solid var(--border-color);">
                         <button class="route-btn route-btn-active" data-mode="car">🚗 Car</button>
                         <button class="route-btn" data-mode="foot">🚶 Walk</button>
                         <button class="route-btn" data-mode="bike">🚲 Bike</button>
                     </div>
-
                     <div id="map"></div>
-                    
                 </div>
             </div>
-
         </div>
 
         <div id="ai-chat-container">
@@ -160,13 +186,13 @@
                     <button id="ai-send-btn">Send</button>
                 </div>
             </div>
-            
             <button id="ai-toggle-btn">✨ Ask AI</button>
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         <script src="script.js"></script>
 </body>
 </html>

@@ -37,10 +37,9 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     padding: 20px;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth fade for the whole page */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Base styling for inputs so they adapt to dark mode automatically */
 input {
     background-color: var(--input-bg);
     color: var(--text-color);
@@ -51,7 +50,6 @@ input {
 /* ==========================================
    3. COMPONENTS
    ========================================== */
-/* The Card Look */
 .locations {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -62,13 +60,12 @@ input {
     transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Sleek navigation buttons */
 .nav-btn {
     background-color: transparent;
     color: var(--text-color);
     border: 1px solid var(--border-color);
     padding: 8px 16px;
-    border-radius: 20px; /* The pill shape */
+    border-radius: 20px;
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
@@ -80,11 +77,10 @@ input {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
     color: white;
-    transform: translateX(-4px); /* Tiny slide animation */
+    transform: translateX(-4px);
     box-shadow: 0 4px 8px var(--shadow-color);
 }
 
-/* --- THE DAY FILTER TABS --- */
 .day-btn {
     background-color: transparent;
     color: var(--text-color);
@@ -96,10 +92,7 @@ input {
     transition: all 0.2s ease;
 }
 
-.day-btn:hover {
-    border-color: var(--accent-color);
-}
-
+.day-btn:hover { border-color: var(--accent-color); }
 .day-btn-active {
     background-color: var(--accent-color);
     color: white;
@@ -113,32 +106,23 @@ input {
     font-size: 16px;
     padding: 4px 12px;
 }
-.day-btn-add:hover {
-    background-color: var(--success-color);
-    color: white;
-}
+.day-btn-add:hover { background-color: var(--success-color); color: white; }
 
-/* ==========================================
-   TOGGLE BUTTON THEME (VERTICAL WIPE)
-   ========================================== */
+/* TOGGLE BUTTON THEME */
 .theme-toggle-btn {
-    position: absolute; 
-    top: 20px; 
-    right: 20px; 
+    position: relative; /* Fixes hover overlap issue. Allows flexbox positioning */
     padding: 8px 16px; 
     cursor: pointer; 
     border-radius: 20px; 
     border: 1px solid var(--border-color); 
     background: transparent; 
     font-size: 16px; 
-    /* safely overrides the JavaScript color injections */
     color: var(--text-color) !important; 
     overflow: hidden; 
     z-index: 1; 
     transition: border-color 0.4s ease, color 0.4s ease;
 }
 
-/* 1. The Paint Bucket (Hidden below the button) */
 .theme-toggle-btn::after {
     content: "";
     position: absolute;
@@ -150,18 +134,10 @@ input {
     z-index: -1; 
     transition: height 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
 }
+.theme-toggle-btn:hover::after { height: 100%; }
+.theme-toggle-btn:hover { color: var(--bg-color) !important; }
 
-/* 2. The Trigger (When you hover, wipe up!) */
-.theme-toggle-btn:hover::after {
-    height: 100%; 
-}
-
-/* 3. The Text Invert */
-.theme-toggle-btn:hover {
-    color: var(--bg-color) !important;
-}
-
-/* --- MAP ROUTING TOGGLE BUTTONS --- */
+/* MAP ROUTING TOGGLE BUTTONS */
 .route-btn {
     background-color: var(--card-bg);
     color: var(--text-color);
@@ -173,49 +149,31 @@ input {
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
-
-.route-btn:last-child {
-    border-right: none;
-}
-
-.route-btn:hover {
-    background-color: rgba(33, 150, 243, 0.1); 
-}
-
-.route-btn-active {
-    background-color: var(--accent-color);
-    color: white;
-}
+.route-btn:last-child { border-right: none; }
+.route-btn:hover { background-color: rgba(33, 150, 243, 0.1); }
+.route-btn-active { background-color: var(--accent-color); color: white; }
 
 /* ==========================================
    4. ANIMATIONS & TRANSITIONS
    ========================================== */
 @keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.smooth-transition {
-    animation: fadeIn 0.4s ease-out; 
-}
+.smooth-transition { animation: fadeIn 0.4s ease-out; }
 
-/* --- THE STICKY MAP FIX --- */
+/* THE STICKY MAP FIX */
 .map-sticky-wrapper {
     position: sticky;
     top: 20px;
-    height: 85vh; /* Prevents the map from expanding past the screen height */
+    height: 85vh; 
     z-index: 10;
 }
 
 #map {
     width: 100%;
-    height: 100%; /* Tells Leaflet to perfectly fill the 85vh wrapper */
+    height: 100%; 
     border-radius: 12px;
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 12px var(--shadow-color);
@@ -234,14 +192,8 @@ input {
 /* ==========================================
    6. LIBRARY OVERRIDES
    ========================================== */
-/* changes calendar font to match rest of the site*/
-   .flatpickr-calendar {
-    font-family: inherit !important; 
-}
-/* Forces the map search bar text to stay black so it doesn't vanish in dark mode */
-.leaflet-control-geocoder input {
-    color: #000000 !important;
-}
+.flatpickr-calendar { font-family: inherit !important; }
+.leaflet-control-geocoder input { color: #000000 !important; }
 
 /* ==========================================
    7. WELCOME SCREEN UPGRADE
@@ -249,8 +201,8 @@ input {
 #page-welcome {
     min-height: 85vh;
     display: flex;
-    justify-content: center; /* Centers horizontally */
-    align-items: center;     /* Centers vertically */
+    justify-content: center;
+    align-items: center;    
     border-radius: 12px;
     margin-top: 10px;
     overflow: hidden;
@@ -260,20 +212,16 @@ input {
 
 #welcome-stage {
     display: flex;
-    flex-direction: row; /* Force side-by-side */
+    flex-direction: row; 
     align-items: center;
     justify-content: center;
-    gap: 0; /* Starts at zero for perfect center */
+    gap: 0; 
     transition: gap 0.7s cubic-bezier(0.19, 1, 0.22, 1);
     width: 100%;
 }
 
-/* When active, the cards slide apart */
-#welcome-stage.modal-active {
-    gap: 40px;
-}
+#welcome-stage.modal-active { gap: 40px; }
 
-/* --- THE GLASS CARD --- */
 .glass-card {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(15px);
@@ -287,7 +235,6 @@ input {
 
 .welcome-buttons { display: flex; gap: 15px; justify-content: center; }
 
-/* THE BUTTONS (The cool formatting is back) */
 .welcome-buttons button {
     padding: 14px 28px;
     border-radius: 8px;
@@ -300,34 +247,23 @@ input {
 
 #btn-new-trip { background-color: var(--success-color); color: white; }
 #btn-load-trips { background-color: var(--accent-color); color: white; }
+.welcome-buttons button:hover { transform: translateY(-3px); filter: brightness(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 
-.welcome-buttons button:hover {
-    transform: translateY(-3px);
-    filter: brightness(1.1);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-/* --- THE MODAL (SIDE-CARD) --- */
 #new-trip-modal {
-    background: var(--card-bg); /* Uses your theme colors */
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     padding: 35px;
     border-radius: 20px;
     width: 340px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    /* SLIDE ENGINES */
     opacity: 0;
-    transform: translateX(100px); /* Start shifted right */
+    transform: translateX(100px);
     transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-#new-trip-modal.show {
-    opacity: 1;
-    transform: translateX(0); /* Slide into view */
-}
+#new-trip-modal.show { opacity: 1; transform: translateX(0); }
 
-/* Modal UI Cleanup */
-.modal-inputs input { width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; box-sizing: border-box; border: 1px solid #444444;}
+.modal-inputs input { width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; box-sizing: border-box; border: 1px solid var(--input-border); color: var(--text-color); background: var(--input-bg);}
 .input-label { font-size: 12px; opacity: 0.7; margin: 0 0 5px 0; text-align: left; }
 .modal-btns { display: flex; justify-content: space-between; margin-top: 15px; }
 .modal-btns button { padding: 8px 16px; border-radius: 6px; border: none; color: white; cursor: pointer; }
@@ -338,195 +274,46 @@ input {
    8. MOBILE HOMEPAGE FIX
    ========================================== */
 @media (max-width: 800px) {
-    /* 1. Stack the stage vertically instead of side-by-side */
-    #welcome-stage {
-        flex-direction: column;
-    }
-    
-    /* 2. Push them apart vertically when the modal opens */
-    #welcome-stage.modal-active {
-        gap: 20px;
-    }
-
-    /* 3. Shrink the massive desktop glass card */
-    .glass-card {
-        padding: 30px 20px;
-        width: 90%; /* Forces it to fit inside the phone screen */
-        max-width: 400px;
-    }
-
-    .glass-card h2 {
-        font-size: 1.8em; /* Shrink the giant header */
-    }
-
-    /* 4. Stack the buttons so they don't break the container */
-    .welcome-buttons {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .welcome-buttons button {
-        width: 100%;
-    }
-
-    /* 5. Shrink the modal and make it slide UP instead of LEFT */
-    #new-trip-modal {
-        width: 90%;
-        max-width: 400px;
-        padding: 20px;
-        transform: translateY(50px); /* Replaces the horizontal slide */
-    }
-
-    #new-trip-modal.show {
-        transform: translateY(0);
-    }
+    #welcome-stage { flex-direction: column; }
+    #welcome-stage.modal-active { gap: 20px; }
+    .glass-card { padding: 30px 20px; width: 90%; max-width: 400px; }
+    .glass-card h2 { font-size: 1.8em; }
+    .welcome-buttons { flex-direction: column; width: 100%; }
+    .welcome-buttons button { width: 100%; }
+    #new-trip-modal { width: 90%; max-width: 400px; padding: 20px; transform: translateY(50px); }
+    #new-trip-modal.show { transform: translateY(0); }
 }
 
 /* ==========================================
    9. AI CHATBOT WIDGET
    ========================================== */
-#ai-chat-container {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-/* The floating button */
-#ai-toggle-btn {
-    background: linear-gradient(135deg, var(--accent-color), #9c27b0);
-    color: white;
-    border: none;
-    padding: 14px 24px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 15px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-#ai-toggle-btn:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-}
-
-/* The main window */
-#ai-chat-window {
-    width: 340px;
-    height: 480px;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    margin-bottom: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transform-origin: bottom right;
-    animation: fadeIn 0.3s ease-out;
-}
-
-/* The header */
-#ai-chat-header {
-    background: linear-gradient(135deg, var(--accent-color), #9c27b0);
-    color: white;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#ai-close-btn {
-    background: transparent;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 18px;
-    transition: transform 0.2s;
-}
+#ai-chat-container { position: fixed; bottom: 30px; right: 30px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; }
+#ai-toggle-btn { background: linear-gradient(135deg, var(--accent-color), #9c27b0); color: white; border: none; padding: 14px 24px; border-radius: 30px; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+#ai-toggle-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+#ai-chat-window { width: 340px; height: 480px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow: hidden; transform-origin: bottom right; animation: fadeIn 0.3s ease-out; }
+#ai-chat-header { background: linear-gradient(135deg, var(--accent-color), #9c27b0); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+#ai-close-btn { background: transparent; border: none; color: white; cursor: pointer; font-size: 18px; transition: transform 0.2s; }
 #ai-close-btn:hover { transform: scale(1.2); }
-
-/* The scrolling message area */
-#ai-chat-history {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    background-color: var(--bg-color);
-}
-
-/* The Bubbles */
-.chat-message {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 18px;
-    font-size: 13px;
-    line-height: 1.4;
-    animation: fadeIn 0.3s ease;
-}
-
-.ai-message {
-    background-color: var(--card-bg);
-    color: var(--text-color);
-    align-self: flex-start;
-    border: 1px solid var(--border-color);
-    border-bottom-left-radius: 4px; /* The little tail */
-}
-
-.user-message {
-    background-color: var(--accent-color);
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 4px; /* The little tail */
-}
-
-/* The input area */
-#ai-chat-input-area {
-    display: flex;
-    padding: 12px;
-    background-color: var(--card-bg);
-    border-top: 1px solid var(--border-color);
-    gap: 8px;
-}
-
-#ai-user-input {
-    flex: 1;
-    margin-bottom: 0;
-    padding: 10px;
-}
-
-#ai-send-btn {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 0 16px;
-    cursor: pointer;
-    font-weight: bold;
-}
+#ai-chat-history { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: var(--bg-color); }
+.chat-message { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 13px; line-height: 1.4; animation: fadeIn 0.3s ease; }
+.ai-message { background-color: var(--card-bg); color: var(--text-color); align-self: flex-start; border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+.user-message { background-color: var(--accent-color); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+#ai-chat-input-area { display: flex; padding: 12px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); gap: 8px; }
+#ai-user-input { flex: 1; margin-bottom: 0; padding: 10px; }
+#ai-send-btn { background-color: var(--accent-color); color: white; border: none; border-radius: 6px; padding: 0 16px; cursor: pointer; font-weight: bold; }
 
 #analyze-btn {
     background: linear-gradient(135deg, #8B5CF6, #3B82F6);
     color: white;
     border: none;
     padding: 8px 16px;
-    border-radius: 20px; /* Matches your sleek UI */
+    border-radius: 20px;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    margin-left: 15px; /* Gives it breathing room from the back button */
+    margin-left: 15px;
     display: inline-flex;
     align-items: center;
     gap: 5px;
 }
-
-#analyze-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-}
+#analyze-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
