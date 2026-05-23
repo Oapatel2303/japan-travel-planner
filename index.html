@@ -73,26 +73,61 @@
     </div>
 
     <div id="page-profile" class="smooth-transition" style="display: none;">
-        <h2>account settings</h2>
-        <button id="btn-back-profile" class="nav-btn" style="margin-bottom: 25px;">← back to dashboard</button>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 25px;">
+            <h2>traveler profile</h2>
+            <button id="btn-back-profile" class="nav-btn" style="margin-bottom: 0;">← back to dashboard</button>
+        </div>
 
-        <div class="glass-card" style="max-width: 500px; margin: 0 auto; text-align: left; padding: 30px;">
-            <div style="text-align: center; margin-bottom: 25px;">
-                <img id="profile-avatar-preview" src="https://ui-avatars.com/api/?name=User&background=random" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-color); box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+        <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; max-width: 1000px; margin: 0 auto;">
+            
+            <div class="glass-card" style="flex: 1; min-width: 320px; text-align: left; padding: 30px;">
+                <h3 style="margin-top: 0; color: white; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Account Settings</h3>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <img id="profile-avatar-preview" src="https://ui-avatars.com/api/?name=User&background=random" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-color); box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                </div>
+
+                <p style="font-size: 13px; color: white; opacity: 0.9; margin-bottom: 15px; text-align: center;">Account: <span id="profile-display-email" style="font-weight: bold;"></span></p>
+
+                <p class="input-label" style="margin-bottom: 5px; color: white;">Username</p>
+                <input type="text" id="profile-username" placeholder="traveler_99" autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+
+                <p class="input-label" style="margin-bottom: 5px; color: white;">Avatar Image URL</p>
+                <input type="text" id="profile-avatar-url" placeholder="https://i.imgur.com/...png" autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+
+                <p class="input-label" style="margin-bottom: 5px; color: white;">Travel Style & Interests</p>
+                <input type="text" id="profile-style" placeholder="ex. Tokyo drift culture, historical sites..." autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+
+                <button id="btn-save-profile" style="width: 100%; margin-top: 10px; background: var(--success-color); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">Save Profile</button>
             </div>
 
-            <p style="font-size: 13px; color: white; opacity: 0.9; margin-bottom: 15px; text-align: center;">Account: <span id="profile-display-email" style="font-weight: bold;"></span></p>
+            <div class="glass-card" style="flex: 1.2; min-width: 320px; text-align: left; padding: 30px;">
+                <h3 style="margin-top: 0; color: white; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Social Network</h3>
 
-            <p class="input-label" style="margin-bottom: 5px; color: white;">Username</p>
-            <input type="text" id="profile-username" placeholder="traveler_99" autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+                <div style="margin-bottom: 25px; margin-top: 20px;">
+                    <p class="input-label" style="color: white; margin-bottom: 8px;">Find Travelers</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="friend-search-input" placeholder="Search by username..." autocomplete="off" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                        <button id="btn-search-friend" style="background: var(--accent-color); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">Search</button>
+                    </div>
+                    <div id="friend-search-results" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
 
-            <p class="input-label" style="margin-bottom: 5px; color: white;">Avatar Image URL</p>
-            <input type="text" id="profile-avatar-url" placeholder="https://i.imgur.com/...png" autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+                <div style="margin-bottom: 25px;">
+                    <p class="input-label" style="color: white; margin-bottom: 8px;">Friend Requests</p>
+                    <div id="friend-requests-container" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); min-height: 40px; display: flex; flex-direction: column; gap: 8px;">
+                        <p style="font-size: 13px; color: gray; text-align: center; margin: 5px 0;">No pending requests.</p>
+                    </div>
+                </div>
 
-            <p class="input-label" style="margin-bottom: 5px; color: white;">Travel Style & Interests</p>
-            <input type="text" id="profile-style" placeholder="ex. Tokyo drift culture, historical sites..." autocomplete="off" style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+                <div>
+                    <p class="input-label" style="color: white; margin-bottom: 8px;">My Friends</p>
+                    <div id="friends-list-container" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); min-height: 40px; display: flex; flex-direction: column; gap: 8px;">
+                        <p style="font-size: 13px; color: gray; text-align: center; margin: 5px 0;">No friends added yet.</p>
+                    </div>
+                </div>
+            </div>
 
-            <button id="btn-save-profile" style="width: 100%; margin-top: 20px; background: var(--success-color); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">Save Profile</button>
         </div>
     </div>
 
@@ -107,7 +142,10 @@
 
     <div id="page-planner" class="smooth-transition" style="display: none;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <button id="btn-export" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">export trip code</button>
+            <div>
+                <button id="btn-export" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">export trip code</button>
+                <button id="btn-manage-collabs" style="background-color: var(--warning-color); color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px; font-weight: bold;">👥 Collaborators</button>
+            </div>
             <button id="analyze-btn" class="action-btn">🔍 Analyze My Trip</button>
         </div>
         
@@ -187,6 +225,23 @@
                 </div>
             </div>
             <button id="ai-toggle-btn">✨ Ask AI</button>
+        </div>
+
+        <div id="collab-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 9999; width: 320px;">
+            <h3 style="margin-top: 0; color: var(--accent-color);">Trip Collaborators</h3>
+            <p style="font-size: 13px; color: var(--text-color); opacity: 0.8; margin-bottom: 15px;">Add friends to plan this trip together.</p>
+
+            <div id="current-collabs-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;">
+                </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="collab-friend-select" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                    <option value="">Select a friend...</option>
+                </select>
+                <button id="btn-add-collab" style="background: var(--success-color); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Add</button>
+            </div>
+
+            <button id="btn-close-collab" style="width: 100%; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; cursor: pointer;">Close</button>
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

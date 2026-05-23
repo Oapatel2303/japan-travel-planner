@@ -41,18 +41,10 @@ const authErrorMsg = document.getElementById('auth-error-msg');
 authStatusBtn.addEventListener('click', () => {
     if (currentUser) {
         authStatusBtn.innerText = "Logging out...";
-        
         for (let key in localStorage) {
-            if (key.startsWith('sb-')) {
-                localStorage.removeItem(key);
-            }
+            if (key.startsWith('sb-')) localStorage.removeItem(key);
         }
-        
-        supabaseClient.auth.signOut().finally(() => {
-            window.location.reload();
-        });
-        
-        setTimeout(() => window.location.reload(), 1500);
+        supabaseClient.auth.signOut().finally(() => { window.location.reload(); });
     } else {
         authModal.style.display = 'block';
     }
@@ -65,74 +57,25 @@ document.getElementById('btn-close-auth').addEventListener('click', () => {
 
 document.getElementById('btn-signup').addEventListener('click', async () => {
     authErrorMsg.style.display = 'none';
-    const { data, error } = await supabaseClient.auth.signUp({
-        email: authEmail.value,
-        password: authPassword.value,
-    });
-    if (error) {
-        authErrorMsg.innerText = error.message;
-        authErrorMsg.style.display = 'block';
-    } else {
-        alert("Account created successfully! You are now logged in.");
-        authModal.style.display = 'none';
-    }
+    const { error } = await supabaseClient.auth.signUp({ email: authEmail.value, password: authPassword.value });
+    if (error) { authErrorMsg.innerText = error.message; authErrorMsg.style.display = 'block'; } 
+    else { alert("Account created! You are now logged in."); authModal.style.display = 'none'; }
 });
 
 document.getElementById('btn-login').addEventListener('click', async () => {
     authErrorMsg.style.display = 'none';
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: authEmail.value,
-        password: authPassword.value,
-    });
-    if (error) {
-        authErrorMsg.innerText = error.message;
-        authErrorMsg.style.display = 'block';
-    } else {
-        authModal.style.display = 'none';
-    }
+    const { error } = await supabaseClient.auth.signInWithPassword({ email: authEmail.value, password: authPassword.value });
+    if (error) { authErrorMsg.innerText = error.message; authErrorMsg.style.display = 'block'; } 
+    else { authModal.style.display = 'none'; }
 });
 
-// Handles routing related to logging in/out
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    if (session) {
-        currentUser = session.user;
-        authStatusBtn.innerText = "Log Out";
-        authStatusBtn.style.background = "var(--danger-color)";
-        authStatusBtn.style.color = "white";
-        console.log("User is logged in:", currentUser.email);
-
-        btnProfile.style.display = 'block';
-
-        if (pageWelcome.style.display !== 'none') {
-            pageWelcome.style.display = 'none';
-            pageDashboard.style.display = 'block';
-        }
-
-        const { data, error } = await supabaseClient
-            .from('trips')
-            .select('*')
-            .eq('user_id', currentUser.id);
-
-        if (error) {
-            console.error("Error pulling cloud trips:", error);
-        } else if (data && data.length > 0) {
-            masterTripsArray = data.map(row => {
-                return { id: row.id, ...row.trip_data };
-            });
-            localStorage.setItem('myMasterTrips', JSON.stringify(masterTripsArray));
-            renderDashboard();
-        } else {
-            masterTripsArray = [];
-            localStorage.setItem('myMasterTrips', JSON.stringify(masterTripsArray));
-            renderDashboard();
-        }
-    } else {
+// --- BULLETPROOF SESSION HANDLER ---
+async function initializeUserSession(session) {
+    if (!session) {
         currentUser = null;
         authStatusBtn.innerText = "Log In / Sign Up";
         authStatusBtn.style.background = "var(--card-bg)";
         authStatusBtn.style.color = "var(--text-color)";
-        console.log("User is logged out.");
-
         btnProfile.style.display = 'none';
 
         // FORCE SCREEN ROUTING BACK TO HOME
@@ -145,21 +88,64 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
         localStorage.removeItem('myMasterTrips');
         masterTripsArray = [
             {
-                id: "trip_japan", name: "japan 2026", destination: "japan", dates: "oct 2026", days: 3,
-                categories: [{ name: "vegetarian spots", checked: false }, { name: "anime landmarks (one piece, jjk)", checked: false }, { name: "motorcycle & car scene spots", checked: false }],
-                locations: [
-                    { name: "shibuya station", day: 1, category: "anime landmark (jjk)", notes: "need to find the specific exit from the shibuya incident arc.", visited: false, cost: 0, lat: 35.6581, lng: 139.7017 },
-                    { name: "t's tantan (tokyo station)", day: 2, category: "vegetarian", notes: "famous vegan ramen spot inside keiyo street.", visited: false, cost: 15, lat: 35.6811, lng: 139.7667 },
-                    { name: "Daikoku Parking Area, Yokohama", day: 3, category: "motorcycle & car scene", notes: "legendary car meet spot.", visited: false, cost: 20, lat: 35.4667, lng: 139.6333 }
-                ]
-            },
-            {
-                id: "trip_france", name: "france food tour", destination: "france", dates: "sept 2027", days: 1,
-                categories: [{ name: "bistro classics", checked: false }],
-                locations: [{ name: "le procope", day: 1, category: "bistro classics", notes: "historic restaurant in paris. trying the coq au vin.", visited: false, cost: 45, lat: 48.8530, lng: 2.3386 }]
+                id: "trip_japan", name: "japan 2026", destination: "japan", dates: "oct 2026", days: 3, owner_id: "dummy",
+                categories: [{ name: "vegetarian spots", checked: false }, { name: "anime landmarks", checked: false }],
+                locations: [{ name: "shibuya station", day: 1, category: "anime landmark", notes: "shibuya incident arc.", visited: false, cost: 0, lat: 35.6581, lng: 139.7017 }]
             }
         ];
         renderDashboard();
+        return;
+    }
+
+    // Prevent double-fetching if the session is already anchored
+    if (currentUser && currentUser.id === session.user.id) return; 
+
+    currentUser = session.user;
+    authStatusBtn.innerText = "Log Out";
+    authStatusBtn.style.background = "var(--danger-color)";
+    authStatusBtn.style.color = "white";
+    console.log("User session anchored:", currentUser.email);
+
+    btnProfile.style.display = 'block';
+    if (pageWelcome.style.display !== 'none') {
+        pageWelcome.style.display = 'none';
+        pageDashboard.style.display = 'block';
+    }
+
+    // MULTIPLAYER FETCH LOGIC
+    const { data: ownedTrips } = await supabaseClient.from('trips').select('*').eq('user_id', currentUser.id);
+    const { data: collabRecords } = await supabaseClient.from('trip_collaborators').select('trip_id').eq('user_id', currentUser.id);
+
+    let sharedTrips = [];
+    if (collabRecords && collabRecords.length > 0) {
+        let tripIds = collabRecords.map(r => r.trip_id);
+        const { data: collabs } = await supabaseClient.from('trips').select('*').in('id', tripIds);
+        if (collabs) sharedTrips = collabs;
+    }
+
+    let allTrips = [...(ownedTrips || []), ...sharedTrips];
+
+    if (allTrips.length > 0) {
+        masterTripsArray = allTrips.map(row => {
+            return { id: row.id, owner_id: row.user_id, ...row.trip_data };
+        });
+    } else {
+        masterTripsArray = [];
+    }
+    
+    localStorage.setItem('myMasterTrips', JSON.stringify(masterTripsArray));
+    renderDashboard();
+}
+
+// 1. Force a session check instantly on page load
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
+    initializeUserSession(session);
+});
+
+// 2. Listen for actual log in / log out clicks
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        initializeUserSession(session);
     }
 });
 
@@ -174,13 +160,23 @@ async function syncTripToCloud(tripObject, isDelete = false) {
 
     const payload = {
         id: tripObject.id,
-        user_id: currentUser.id,
+        user_id: tripObject.owner_id || currentUser.id, 
         trip_data: { name: tripObject.name, destination: tripObject.destination, dates: tripObject.dates, days: tripObject.days, categories: tripObject.categories, locations: tripObject.locations }
     };
 
-    const { error } = await supabaseClient.from('trips').upsert(payload);
-    if (error) {
-        console.error("Cloud sync failed:", error);
+    const isOwner = !tripObject.owner_id || tripObject.owner_id === currentUser.id;
+    let syncError;
+
+    if (isOwner) {
+        const { error } = await supabaseClient.from('trips').upsert(payload);
+        syncError = error;
+    } else {
+        const { error } = await supabaseClient.from('trips').update({ trip_data: payload.trip_data }).eq('id', tripObject.id);
+        syncError = error;
+    }
+
+    if (syncError) {
+        console.error("Cloud sync failed:", syncError);
     } else {
         console.log(`☁️ Trip '${tripObject.name}' successfully synced to cloud.`);
     }
@@ -188,7 +184,7 @@ async function syncTripToCloud(tripObject, isDelete = false) {
 
 
 // ==========================================
-// ENGINE 00: USER PROFILE SYSTEM
+// ENGINE 00.5: USER PROFILE SYSTEM
 // ==========================================
 
 document.getElementById('profile-avatar-preview').addEventListener('error', function() {
@@ -216,6 +212,9 @@ btnProfile.addEventListener('click', async () => {
             document.getElementById('profile-style').value = "";
             document.getElementById('profile-avatar-preview').src = "https://ui-avatars.com/api/?name=User&background=random";
         }
+
+        // Load social data
+        renderSocialDashboard();
     }
 });
 
@@ -283,6 +282,301 @@ document.getElementById('profile-avatar-url').addEventListener('input', (e) => {
         e.target.value = url; 
     }
     document.getElementById('profile-avatar-preview').src = (url !== "") ? url : "https://ui-avatars.com/api/?name=User&background=random";
+});
+
+// ==========================================
+// ENGINE 00.75: SOCIAL & FRIENDS WIDGET
+// ==========================================
+
+// Global render function to refresh social data
+async function renderSocialDashboard() {
+    if (!currentUser) return;
+    
+    let requestsContainer = document.getElementById('friend-requests-container');
+    let friendsContainer = document.getElementById('friends-list-container');
+    
+    // 1. Fetch Pending Requests
+    const { data: requests } = await supabaseClient
+        .from('friendships')
+        .select('*')
+        .eq('receiver_id', currentUser.id)
+        .eq('status', 'pending');
+
+    requestsContainer.innerHTML = "";
+    if (requests && requests.length > 0) {
+        for (let req of requests) {
+            let { data: sender } = await supabaseClient.from('profiles').select('*').eq('id', req.requester_id).single();
+            if (sender) {
+                requestsContainer.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${sender.avatar_url || 'https://ui-avatars.com/api/?name=U'}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                            <span style="font-weight: bold; color: var(--text-color); font-size: 14px;">${sender.username}</span>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <button onclick="respondToRequest('${req.id}', 'accepted')" style="background: var(--success-color); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Accept</button>
+                            <button onclick="respondToRequest('${req.id}', 'rejected')" style="background: var(--danger-color); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Decline</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    } else {
+        requestsContainer.innerHTML = `<p style="font-size: 13px; color: gray; text-align: center; margin: 5px 0;">No pending requests.</p>`;
+    }
+
+    // 2. Fetch Accepted Friends & Their Stats
+    const { data: friendships } = await supabaseClient
+        .from('friendships')
+        .select('*')
+        .eq('status', 'accepted')
+        .or(`requester_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`);
+
+    friendsContainer.innerHTML = "";
+    if (friendships && friendships.length > 0) {
+        let friendsData = [];
+
+        // Gather all friend profiles and count their trips
+        for (let rel of friendships) {
+            let friendId = (rel.requester_id === currentUser.id) ? rel.receiver_id : rel.requester_id;
+            let { data: friend } = await supabaseClient.from('profiles').select('*').eq('id', friendId).single();
+            
+            if (friend) {
+                // Ask Supabase to count how many trips this user owns
+                let { count } = await supabaseClient
+                    .from('trips')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', friend.id);
+
+                friendsData.push({
+                    ...friend,
+                    tripCount: count || 0,
+                    relationshipId: rel.id
+                });
+            }
+        }
+
+        // Sort friends so the ones with the MOST trips appear at the top!
+        friendsData.sort((a, b) => b.tripCount - a.tripCount);
+
+        // Render them to the UI
+        for (let f of friendsData) {
+            friendsContainer.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 10px 15px; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <img src="${f.avatar_url || 'https://ui-avatars.com/api/?name=U'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color);">
+                        <div>
+                            <p style="margin: 0; font-weight: bold; color: var(--text-color); font-size: 15px;">${f.username || 'Unknown User'}</p>
+                            <p style="margin: 0; font-size: 12px; color: gray; font-style: italic;">${f.travel_style || 'No style set'}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: right;">
+                        <div style="background: rgba(33, 150, 243, 0.15); color: var(--accent-color); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(33, 150, 243, 0.3);">
+                            ✈️ ${f.tripCount} Trips
+                        </div>
+                        <button onclick="respondToRequest('${f.relationshipId}', 'rejected')" style="margin-top: 6px; background: transparent; border: none; color: var(--danger-color); font-size: 11px; cursor: pointer; text-decoration: underline;">Remove</button>
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        friendsContainer.innerHTML = `<p style="font-size: 13px; color: gray; text-align: center; margin: 5px 0;">No friends added yet. Try searching for someone!</p>`;
+    }
+}
+
+// User Search Logic
+document.getElementById('btn-search-friend').addEventListener('click', async () => {
+    let query = document.getElementById('friend-search-input').value.trim();
+    let resultsContainer = document.getElementById('friend-search-results');
+    
+    if (query === "") return;
+    resultsContainer.innerHTML = `<p style="font-size: 12px; color: gray;">Searching...</p>`;
+
+    const { data: users, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .ilike('username', `%${query}%`) 
+        .neq('id', currentUser.id) // Don't show self
+        .limit(5);
+
+    resultsContainer.innerHTML = "";
+    if (users && users.length > 0) {
+        users.forEach(u => {
+            resultsContainer.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${u.avatar_url || 'https://ui-avatars.com/api/?name=U'}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                        <span style="font-weight: bold; color: var(--text-color); font-size: 14px;">${u.username || 'Unknown'}</span>
+                    </div>
+                    <button onclick="sendFriendRequest('${u.id}')" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">+ Add</button>
+                </div>
+            `;
+        });
+    } else {
+        resultsContainer.innerHTML = `<p style="font-size: 12px; color: var(--danger-color);">No users found.</p>`;
+    }
+});
+
+// Action Handlers
+window.sendFriendRequest = async function(receiverId) {
+    const { error } = await supabaseClient.from('friendships').insert({
+        requester_id: currentUser.id,
+        receiver_id: receiverId
+    });
+    
+    if (error) {
+        alert("Request already sent or error occurred.");
+    } else {
+        alert("Friend request sent!");
+        document.getElementById('friend-search-input').value = "";
+        document.getElementById('friend-search-results').innerHTML = "";
+    }
+}
+
+window.respondToRequest = async function(requestId, newStatus) {
+    let err;
+
+    if (newStatus === 'rejected') {
+        const { error } = await supabaseClient.from('friendships').delete().eq('id', requestId);
+        err = error;
+    } else {
+        const { error } = await supabaseClient.from('friendships').update({ status: newStatus }).eq('id', requestId);
+        err = error;
+    }
+
+    // If Supabase blocks the action tell user
+    if (err) {
+        console.error("Friendship update failed:", err.message);
+        alert("Failed to update friend status! Check the F12 console.");
+    }
+
+    renderSocialDashboard();
+}
+
+// ==========================================
+// ENGINE 00.8: MULTIPLAYER & COLLABORATION
+// ==========================================
+let collabModal = document.getElementById('collab-modal');
+let btnManageCollabs = document.getElementById('btn-manage-collabs');
+let btnCloseCollab = document.getElementById('btn-close-collab');
+let btnAddCollab = document.getElementById('btn-add-collab');
+
+// 1. Open Modal
+btnManageCollabs.addEventListener('click', async () => {
+    if (!activeTripId || !currentUser) {
+        alert("You must be logged in to manage collaborators.");
+        return;
+    }
+    collabModal.style.display = 'block';
+    await loadCollaborators();
+    await loadFriendsDropdown();
+});
+
+btnCloseCollab.addEventListener('click', () => { collabModal.style.display = 'none'; });
+
+// 2. Load Current Users attached to trip
+async function loadCollaborators() {
+    let list = document.getElementById('current-collabs-list');
+    list.innerHTML = "<p style='font-size: 12px; color: gray;'>Loading team...</p>";
+
+    const { data: collabs, error } = await supabaseClient
+        .from('trip_collaborators')
+        .select('user_id, role')
+        .eq('trip_id', activeTripId);
+
+    if (error || !collabs || collabs.length === 0) {
+        list.innerHTML = "<p style='font-size: 12px; color: gray;'>Just you right now.</p>";
+        return;
+    }
+
+    list.innerHTML = "";
+    for (let c of collabs) {
+        let { data: profile } = await supabaseClient.from('profiles').select('username, avatar_url').eq('id', c.user_id).single();
+        if (profile) {
+            list.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); padding: 6px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <img src="${profile.avatar_url || 'https://ui-avatars.com/api/?name=U'}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                        <span style="font-size: 13px; font-weight: bold; color: var(--text-color);">${profile.username}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 10px; padding: 3px 6px; border-radius: 10px; background: var(--accent-color); color: white; text-transform: uppercase;">${c.role}</span>
+                        <button onclick="removeCollaborator('${c.user_id}')" style="background: transparent; color: var(--danger-color); border: none; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 4px;" title="Remove user">×</button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
+
+// to remove a user from team
+window.removeCollaborator = async function(userId) {
+    if (!confirm("Are you sure you want to remove this person from the trip?")) return;
+    
+    const { error } = await supabaseClient
+        .from('trip_collaborators')
+        .delete()
+        .match({ trip_id: activeTripId, user_id: userId });
+        
+    if (error) {
+        console.error("Error removing:", error);
+        alert("Failed to remove collaborator. Are you the original trip owner?");
+    } else {
+        await loadCollaborators();
+    }
+}
+
+// 3. Load accepted friends into dropdown
+async function loadFriendsDropdown() {
+    let select = document.getElementById('collab-friend-select');
+    select.innerHTML = '<option value="">Select a friend...</option>';
+
+    const { data: friendships } = await supabaseClient
+        .from('friendships')
+        .select('*')
+        .eq('status', 'accepted')
+        .or(`requester_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`);
+
+    if (friendships) {
+        for (let f of friendships) {
+            let friendId = (f.requester_id === currentUser.id) ? f.receiver_id : f.requester_id;
+            let { data: friendProfile } = await supabaseClient.from('profiles').select('id, username').eq('id', friendId).single();
+            if (friendProfile) {
+                select.innerHTML += `<option value="${friendProfile.id}">${friendProfile.username}</option>`;
+            }
+        }
+    }
+}
+
+// 4. Attach Friend to Trip
+btnAddCollab.addEventListener('click', async () => {
+    let friendId = document.getElementById('collab-friend-select').value;
+    if (!friendId) return alert("Select a friend from the list first.");
+
+    let originalText = btnAddCollab.innerText;
+    btnAddCollab.innerText = "...";
+    btnAddCollab.disabled = true;
+
+    const { error } = await supabaseClient.from('trip_collaborators').insert({
+        trip_id: activeTripId,
+        user_id: friendId,
+        role: 'editor' 
+    });
+
+    btnAddCollab.disabled = false;
+    btnAddCollab.innerText = originalText;
+
+    if (error) {
+        if (error.code === '23505') { 
+            alert("This friend is already added to this trip!");
+        } else {
+            console.error("Collab error:", error);
+            alert("Database error adding friend.");
+        }
+    } else {
+        await loadCollaborators(); 
+    }
 });
 
 
@@ -367,7 +661,16 @@ modalCreate.addEventListener('click', function() {
         }
     }
 
-    let newFolder = { id: crypto.randomUUID(), name: rawName, destination: rawDest.toLowerCase().trim(), dates: rawDates, days: 1, categories: processedCategories, locations: [] };
+    let newFolder = { 
+        id: crypto.randomUUID(), 
+        owner_id: currentUser ? currentUser.id : null,
+        name: rawName, 
+        destination: rawDest.toLowerCase().trim(), 
+        dates: rawDates, 
+        days: 1, 
+        categories: processedCategories, 
+        locations: [] 
+    };
 
     masterTripsArray.push(newFolder);
     localStorage.setItem('myMasterTrips', JSON.stringify(masterTripsArray));
