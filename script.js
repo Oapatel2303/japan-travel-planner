@@ -1,5 +1,5 @@
 // ==========================================
-// STEP 1: GLOBAL HTML ELEMENTS
+// GLOBAL HTML ELEMENTS
 // ==========================================
 let pageWelcome = document.getElementById('page-welcome');
 let pageDashboard = document.getElementById('page-dashboard');
@@ -69,7 +69,6 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     else { authModal.style.display = 'none'; }
 });
 
-// --- BULLETPROOF SESSION HANDLER ---
 async function initializeUserSession(session) {
     if (!session) {
         currentUser = null;
@@ -112,7 +111,6 @@ async function initializeUserSession(session) {
         pageDashboard.style.display = 'block';
     }
 
-    // MULTIPLAYER FETCH LOGIC
     const { data: ownedTrips } = await supabaseClient.from('trips').select('*').eq('user_id', currentUser.id);
     const { data: collabRecords } = await supabaseClient.from('trip_collaborators').select('trip_id').eq('user_id', currentUser.id);
 
@@ -137,12 +135,10 @@ async function initializeUserSession(session) {
     renderDashboard();
 }
 
-// 1. Force a session check instantly on page load
 supabaseClient.auth.getSession().then(({ data: { session } }) => {
     initializeUserSession(session);
 });
 
-// 2. Listen for actual log in / log out clicks
 supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         initializeUserSession(session);
@@ -213,7 +209,6 @@ btnProfile.addEventListener('click', async () => {
             document.getElementById('profile-avatar-preview').src = "https://ui-avatars.com/api/?name=User&background=random";
         }
 
-        // Load social data
         renderSocialDashboard();
     }
 });
@@ -336,13 +331,13 @@ async function renderSocialDashboard() {
     if (friendships && friendships.length > 0) {
         let friendsData = [];
 
-        // Gather all friend profiles and count their trips
+        // Gather all friend profiles and count trips
         for (let rel of friendships) {
             let friendId = (rel.requester_id === currentUser.id) ? rel.receiver_id : rel.requester_id;
             let { data: friend } = await supabaseClient.from('profiles').select('*').eq('id', friendId).single();
             
             if (friend) {
-                // Ask Supabase to count how many trips this user owns
+                // count how many trips user owns
                 let { count } = await supabaseClient
                     .from('trips')
                     .select('*', { count: 'exact', head: true })
@@ -356,10 +351,9 @@ async function renderSocialDashboard() {
             }
         }
 
-        // Sort friends so the ones with the MOST trips appear at the top!
         friendsData.sort((a, b) => b.tripCount - a.tripCount);
 
-        // Render them to the UI
+        // Render to UI
         for (let f of friendsData) {
             friendsContainer.innerHTML += `
                 <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 10px 15px; border-radius: 6px; border: 1px solid var(--border-color);">
@@ -397,7 +391,7 @@ document.getElementById('btn-search-friend').addEventListener('click', async () 
         .from('profiles')
         .select('*')
         .ilike('username', `%${query}%`) 
-        .neq('id', currentUser.id) // Don't show self
+        .neq('id', currentUser.id)
         .limit(5);
 
     resultsContainer.innerHTML = "";
@@ -823,8 +817,24 @@ function renderLocations() {
 
         let cardColor = spot.visited ? "background-color: rgba(76, 175, 80, 0.15);" : ""; 
         let buttonText = spot.visited ? "visited!" : "mark as visited";
-        tripTotal += spot.cost || 0; 
+        tripTotal += spot.cost || 0;
+        
+        // Build Image Preview Gallery
+        let imageBlock = "";
+        let imgs = spot.imageUrl;
 
+        if (typeof imgs === 'string' && imgs !== "") imgs = [imgs];
+        if (!imgs) imgs = [];
+
+        if (imgs.length > 0) {
+            let imgHTML = "";
+            imgs.forEach(url => {
+                imgHTML += `<img src="${url}" onclick="openLightbox('${url}')" style="height: 120px; width: 160px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color); transition: filter 0.2s; flex-shrink: 0;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='brightness(1)'">`;
+            });
+            imageBlock = `<div style="display: flex; overflow-x: auto; gap: 10px; margin: 10px 0; padding-bottom: 8px;">${imgHTML}</div>`;
+        } else {
+            imageBlock = `<div style="width: 100%; height: 60px; background: rgba(0,0,0,0.1); border-radius: 6px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: gray; font-size: 12px; border: 1px dashed var(--border-color);">no images available</div>`;
+        }
         allHTML += `
             <div class="locations" id="card-${i}" style="${cardColor} padding: 12px; margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
@@ -834,6 +844,7 @@ function renderLocations() {
                     <span style="font-weight: bold; color: var(--success-color);">$${(spot.cost || 0).toFixed(2)}</span>
                 </div>
                 <p style="margin: 2px 0; font-size: 13px; color: var(--text-color); opacity: 0.8;"><strong>cat:</strong> ${spot.category}</p>
+                ${imageBlock}
                 <p style="margin: 2px 0 10px 0; font-size: 13px; color: var(--text-color);"><strong>notes:</strong> ${spot.notes}</p>
                 
                 <div style="display: flex; gap: 8px;">
@@ -897,6 +908,33 @@ async function smartGeocode(rawName, country) {
     return { lat: 0, lng: 0 };
 }
 
+// Unsplash Photo Fetcher
+async function fetchLocationImages(query) {
+    let cleanName = query.replace(/ *\([^)]*\) */g, "").trim(); 
+    try {
+        let res = await fetch(`/.netlify/functions/images?q=${encodeURIComponent(cleanName)}`);
+        
+        if (!res.ok) return [];
+        
+        let urls = await res.json();
+        return urls; 
+        
+    } catch (error) { 
+        console.error("Image fetch error:", error); 
+        return []; 
+    }
+}
+
+// Lightbox Controls
+window.openLightbox = function(url) {
+    document.getElementById('lightbox-img').src = url;
+    document.getElementById('lightbox-modal').style.display = 'flex';
+}
+document.getElementById('lightbox-close').addEventListener('click', () => {
+    document.getElementById('lightbox-modal').style.display = 'none';
+    document.getElementById('lightbox-img').src = "";
+});
+
 addButton.addEventListener('click', async function() {
     if (!activeTripId) return;
     let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
@@ -914,15 +952,26 @@ addButton.addEventListener('click', async function() {
     if (cleanDayNum > currentTrip.days) currentTrip.days = cleanDayNum;
 
     let originalBtnText = addButton.innerText;
-    addButton.innerText = "locating pin..."; addButton.disabled = true;
+    addButton.innerText = "fetching map & images..."; addButton.disabled = true;
 
+    // Fetch GPS and Bulk Images
     let coords = await smartGeocode(nameInput, currentTrip.destination);
+    let imgUrls = await fetchLocationImages(nameInput);
+    
     if (coords.lat === 0 && coords.lng === 0) alert(`Saved to list! Map couldn't find exact GPS coordinates for "${nameInput}".`);
+
+    let existingImages = [];
+    if (editingIndex !== null) {
+        let oldImg = currentTrip.locations[editingIndex].imageUrl;
+        if (Array.isArray(oldImg)) existingImages = oldImg;
+        else if (typeof oldImg === 'string' && oldImg !== "") existingImages = [oldImg];
+    }
 
     let newLocation = {
         name: nameInput, day: cleanDayNum, category: categoryInput, notes: notesInput,
         visited: (editingIndex !== null) ? currentTrip.locations[editingIndex].visited : false,
-        cost: parseFloat(priceInput) || 0, lat: coords.lat, lng: coords.lng  
+        cost: parseFloat(priceInput) || 0, lat: coords.lat, lng: coords.lng,
+        imageUrl: (imgUrls && imgUrls.length > 0) ? imgUrls : existingImages 
     };
 
     if (editingIndex !== null) {
@@ -1058,24 +1107,43 @@ if (localStorage.getItem('myAppTheme') === 'dark') {
 
 themeToggleBtn.addEventListener('click', function() {
     document.body.classList.toggle('dark-mode');
-    if (document.body.classList.contains('dark-mode')) {
-        themeToggleBtn.innerText = "☀️ Light Mode"; themeToggleBtn.style.color = "white"; localStorage.setItem('myAppTheme', 'dark');
+    let isDark = document.body.classList.contains('dark-mode');
+
+    if (isDark) {
+        themeToggleBtn.innerText = "☀️ Light Mode"; 
+        themeToggleBtn.style.color = "white"; 
+        localStorage.setItem('myAppTheme', 'dark');
     } else {
-        themeToggleBtn.innerText = "🌙 Dark Mode"; themeToggleBtn.style.color = "black"; localStorage.setItem('myAppTheme', 'light');
+        themeToggleBtn.innerText = "🌙 Dark Mode"; 
+        themeToggleBtn.style.color = "black"; 
+        localStorage.setItem('myAppTheme', 'light');
+    }
+    
+    // Smoothly transition the 3D lighting without reloading the map
+    if (myMap) {
+        myMap.setConfigProperty('basemap', 'lightPreset', isDark ? 'dusk' : 'dawn');
     }
 });
 
 // ==========================================
-// ENGINE 7: LEAFLET.JS INTERACTIVE MAP
+// ENGINE 6: MAPBOX INTERACTIVE 3D MAP
 // ==========================================
+mapboxgl.accessToken = 'pk.eyJ1Ijoib3BhejIzMDMiLCJhIjoiY21wbGg5aXB4MjY1czJxcGxtNzNnd3l3dSJ9.RlM-MZ6FwK3ooJFeV8eElw'; 
+
 let myMap = null; 
-let currentRouteMode = "car"; 
+let mapMarkers = [];
+let currentRouteMode = "driving"; 
 
 document.querySelectorAll('.route-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.route-btn').forEach(b => b.classList.remove('route-btn-active'));
         this.classList.add('route-btn-active');
-        currentRouteMode = this.getAttribute('data-mode');
+        
+        let rawMode = this.getAttribute('data-mode');
+        if (rawMode === 'car') currentRouteMode = 'driving';
+        if (rawMode === 'foot') currentRouteMode = 'walking';
+        if (rawMode === 'bike') currentRouteMode = 'cycling';
+        
         renderMapPins(); 
     });
 });
@@ -1083,77 +1151,130 @@ document.querySelectorAll('.route-btn').forEach(btn => {
 async function initMap() {
     if (!activeTripId) return;
     let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
-    if (myMap !== null) { myMap.remove(); myMap = null; }
+    
+    // Default fallback (center of the world)
+    let centerLng = -74.5, centerLat = 40, zoomLevel = 2; 
 
-    try {
-        let geoData = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(currentTrip.destination)}&count=1&language=en&format=json`)).json();
-        let centerLat = 0, centerLng = 0, zoomLevel = 2; 
-        if (geoData.results?.length > 0) { centerLat = geoData.results[0].latitude; centerLng = geoData.results[0].longitude; zoomLevel = 5; }
+    if (currentTrip.locations && currentTrip.locations.length > 0) {
+        let firstLoc = currentTrip.locations.find(l => l.lat && l.lng);
+        if (firstLoc) {
+            centerLat = firstLoc.lat;
+            centerLng = firstLoc.lng;
+            zoomLevel = 11;
+        }
+    }
 
-        myMap = L.map('map').setView([centerLat, centerLng], zoomLevel);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(myMap);
-        L.Control.geocoder({ position: 'topright' }).addTo(myMap);
+    // Determine lighting based on UI theme!
+    let isDark = document.body.classList.contains('dark-mode');
+    let currentLightPreset = isDark ? 'dusk' : 'dawn'; 
+
+    myMap = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/standard', 
+        center: [centerLng, centerLat],
+        zoom: zoomLevel,
+        pitch: 60 
+    });
+
+    myMap.on('style.load', () => {
+        myMap.setConfigProperty('basemap', 'lightPreset', currentLightPreset);
+        myMap.setConfigProperty('basemap', 'showPointofInterestLabels', false);
         renderMapPins();
-    } catch (error) { console.error("Map init failed:", error); }
+    });
 }
 
 async function renderMapPins() {
     if (!myMap || !activeTripId) return;
     let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
-    myMap.eachLayer((layer) => { if (layer instanceof L.Marker || layer instanceof L.Polyline) myMap.removeLayer(layer); });
 
-    let bounds = [], routeCoords = []; 
+    mapMarkers.forEach(marker => marker.remove());
+    mapMarkers = [];
+    if (myMap.getSource('route')) {
+        myMap.removeLayer('route');
+        myMap.removeSource('route');
+    }
+
+    let bounds = new mapboxgl.LngLatBounds();
+    let routeCoords = []; 
     let visibleSpots = currentTrip.locations.filter(spot => (activeFilterDay === 0 || spot.day === activeFilterDay) && (spot.lat && spot.lng));
 
+    visibleSpots.sort((a, b) => a.day - b.day);
+
+    visibleSpots.forEach(spot => {
+        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+            `<b style="font-size: 14px; color: black;">[Day ${spot.day}] ${spot.name}</b><br><span style="color: gray; font-size: 12px;">${spot.category}</span>`
+        );
+
+        const marker = new mapboxgl.Marker({ color: '#2196F3' })
+            .setLngLat([spot.lng, spot.lat])
+            .setPopup(popup)
+            .addTo(myMap);
+
+        mapMarkers.push(marker);
+        bounds.extend([spot.lng, spot.lat]);
+        routeCoords.push(`${spot.lng},${spot.lat}`);
+    });
+
     if (visibleSpots.length > 0) {
-        let unvisited = [...visibleSpots];
-        let currentSpot = unvisited.shift(); 
-        drawPin(currentSpot);
-
-        while (unvisited.length > 0) {
-            let nearestIndex = 0, shortestDistance = Infinity;
-            for (let i = 0; i < unvisited.length; i++) {
-                let dist = myMap.distance([currentSpot.lat, currentSpot.lng], [unvisited[i].lat, unvisited[i].lng]);
-                if (dist < shortestDistance) { shortestDistance = dist; nearestIndex = i; }
-            }
-            currentSpot = unvisited.splice(nearestIndex, 1)[0];
-            drawPin(currentSpot);
-        }
+        myMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
     }
 
-    function drawPin(spot) {
-        L.marker([spot.lat, spot.lng]).addTo(myMap).bindPopup(`<b style="font-size: 14px;">[Day ${spot.day}] ${spot.name}</b><br><span style="color: gray; font-size: 12px;">${spot.category}</span>`);
-        bounds.push([spot.lat, spot.lng]); routeCoords.push([spot.lat, spot.lng]);
-    }
-
-    if (routeCoords.length > 1) {
+    // Draw driving/walking route
+    if (routeCoords.length > 1 && routeCoords.length <= 25) { 
         try {
-            let data = await (await fetch(`https://routing.openstreetmap.de/routed-${currentRouteMode}/route/v1/driving/${routeCoords.map(c => `${c[1]},${c[0]}`).join(';')}?overview=full&geometries=geojson`)).json();
-            if (data.routes?.length > 0) L.polyline(data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]), { color: '#2196F3', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(myMap);
-            else throw new Error("No route");
-        } catch { L.polyline(routeCoords, { color: '#2196F3', weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(myMap); }
+            let coordString = routeCoords.join(';');
+            
+            let dirRes = await fetch(`https://api.mapbox.com/directions/v5/mapbox/${currentRouteMode}/${coordString}?geometries=geojson&overview=full&access_token=${mapboxgl.accessToken}`);
+            let dirData = await dirRes.json();
+
+            if (dirData.routes && dirData.routes.length > 0) {
+                myMap.addSource('route', {
+                    'type': 'geojson',
+                    'data': { 'type': 'Feature', 'properties': {}, 'geometry': dirData.routes[0].geometry }
+                });
+
+                myMap.addLayer({
+                    'id': 'route',
+                    'type': 'line',
+                    'source': 'route',
+                    'layout': { 'line-join': 'round', 'line-cap': 'round' },
+                    'paint': { 
+                        'line-color': '#470a44', 
+                        'line-width': 5, 
+                        'line-opacity': 0.8,
+                        'line-emissive-strength': 1 
+                    }
+                });
+            }
+        } catch (error) { console.error("Mapbox routing error:", error); }
     }
-    if (bounds.length > 0) myMap.fitBounds(bounds, { padding: [50, 50] });
 }
 
 // ==========================================
-// ENGINE 8 & 9 & 10: AI INTEGRATION
+// ENGINE 7, 8 & 9: AI INTEGRATION (SUPABASE MEMORY)
 // ==========================================
 let aiToggleBtn = document.getElementById('ai-toggle-btn');
 let aiChatWindow = document.getElementById('ai-chat-window');
 let aiCloseBtn = document.getElementById('ai-close-btn');
 
-aiToggleBtn.addEventListener('click', () => { aiChatWindow.style.display = 'flex'; aiToggleBtn.style.display = 'none'; });
-aiCloseBtn.addEventListener('click', () => { aiChatWindow.style.display = 'none'; aiToggleBtn.style.display = 'block'; });
+// The active memory array send to Netlify server
+let aiConversationHistory = [];
 
-function resetChatWidget() {
-    let history = document.getElementById('ai-chat-history');
-    if (history) history.innerHTML = `<div class="chat-message ai-message">Hi! I'm your local guide. What do you want to know about this trip?</div>`;
-    document.getElementById('ai-user-input').value = ""; 
-    aiChatWindow.style.display = 'none'; aiToggleBtn.style.display = 'block';
-}
+aiToggleBtn.addEventListener('click', async () => { 
+    if (!activeTripId) return alert("Please open a trip first!");
+    aiChatWindow.style.display = 'flex'; 
+    aiToggleBtn.style.display = 'none'; 
+    await loadChatHistory();
+});
+
+aiCloseBtn.addEventListener('click', () => { 
+    aiChatWindow.style.display = 'none'; 
+    aiToggleBtn.style.display = 'block'; 
+});
 
 function appendMessage(role, text) {
+    if (role === 'system') return;
+    
     let msgDiv = document.createElement('div');
     msgDiv.classList.add('chat-message', role === 'user' ? 'user-message' : 'ai-message');
     msgDiv.innerHTML = role === 'user' ? text : text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
@@ -1161,36 +1282,117 @@ function appendMessage(role, text) {
     document.getElementById('ai-chat-history').scrollTop = document.getElementById('ai-chat-history').scrollHeight;
 }
 
+async function loadChatHistory() {
+    let historyUI = document.getElementById('ai-chat-history');
+    historyUI.innerHTML = `<div class="chat-message ai-message">Connecting to memory banks...</div>`;
+    aiConversationHistory = []; 
+
+    // Pull every message attached to this specific trip
+    const { data, error } = await supabaseClient
+        .from('trip_chats')
+        .select('*')
+        .eq('trip_id', activeTripId)
+        .order('created_at', { ascending: true });
+
+    historyUI.innerHTML = ""; 
+
+    if (data && data.length > 0) {
+        // Rebuild history array and UI if data exists
+        data.forEach(msg => {
+            aiConversationHistory.push({ role: msg.role, content: msg.content });
+            appendMessage(msg.role, msg.content);
+        });
+    } else {
+        let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
+        let sysPrompt = `You are an expert travel guide for ${currentTrip.destination}. The user's name is Ohm. They are a vegetarian (no meat or fish, but eggs are okay). Strictly tailor all restaurant and food recommendations to this diet. Keep responses conversational and under 3 sentences.`;
+        
+        await supabaseClient.from('trip_chats').insert({ trip_id: activeTripId, role: 'system', content: sysPrompt });
+        
+        aiConversationHistory.push({ role: 'system', content: sysPrompt });
+        appendMessage("assistant", "Hi! I'm your local guide. I have my memory fully synced. What do you want to know about this trip?");
+    }
+}
+
 async function sendToGroq(userText) {
     let typingId = "typing-" + Date.now();
-    let typingDiv = document.createElement('div'); typingDiv.classList.add('chat-message', 'ai-message'); typingDiv.id = typingId; typingDiv.innerText = "Thinking...";
+    let typingDiv = document.createElement('div'); 
+    typingDiv.classList.add('chat-message', 'ai-message'); 
+    typingDiv.id = typingId; 
+    typingDiv.innerText = "Thinking...";
     document.getElementById('ai-chat-history').appendChild(typingDiv);
     
     try {
-        let dest = activeTripId ? masterTripsArray.find(t => t.id === activeTripId)?.destination : "a general vacation";
-        const response = await fetch("/.netlify/functions/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "system", content: `You are an expert guide for ${dest}. Keep it under 3 sentences.` }, { role: "user", content: userText }] }) });
+        // 1. Save user message to database
+        await supabaseClient.from('trip_chats').insert({ trip_id: activeTripId, role: 'user', content: userText });
+        aiConversationHistory.push({ role: "user", content: userText });
+
+        // 2. Send full context array to Netlify function
+        const response = await fetch("/.netlify/functions/chat", { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify({ messages: aiConversationHistory }) 
+        });
+        
         document.getElementById(typingId).remove();
-        if (!response.ok) return appendMessage("ai", "Server error!");
-        appendMessage("ai", (await response.json()).choices[0].message.content);
-    } catch { document.getElementById(typingId).remove(); appendMessage("ai", "Servers offline!"); }
+        if (!response.ok) return appendMessage("assistant", "Server error!");
+        
+        let responseData = await response.json();
+        let aiResponseText = responseData.choices[0].message.content;
+
+        // 3. Save AI response to database
+        await supabaseClient.from('trip_chats').insert({ trip_id: activeTripId, role: 'assistant', content: aiResponseText });
+        aiConversationHistory.push({ role: "assistant", content: aiResponseText });
+
+        appendMessage("assistant", aiResponseText);
+    } catch { 
+        document.getElementById(typingId).remove(); 
+        appendMessage("assistant", "Servers offline!"); 
+    }
 }
 
 document.getElementById('ai-send-btn').addEventListener('click', () => {
     let text = document.getElementById('ai-user-input').value.trim();
-    if (!text) return; appendMessage('user', text); document.getElementById('ai-user-input').value = ""; sendToGroq(text);
+    if (!text) return; 
+    appendMessage('user', text); 
+    document.getElementById('ai-user-input').value = ""; 
+    sendToGroq(text);
 });
-document.getElementById('ai-user-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('ai-send-btn').click(); });
+
+document.getElementById('ai-user-input').addEventListener('keypress', (e) => { 
+    if (e.key === 'Enter') document.getElementById('ai-send-btn').click(); 
+});
 
 document.getElementById('analyze-btn').addEventListener('click', async () => {
     if (!activeTripId) return alert("Open a trip first!");
     let trip = masterTripsArray.find(t => t.id === activeTripId);
-    if (!trip.locations?.length) return appendMessage("ai", "Itinerary is empty!");
-    appendMessage("ai", "🔍 Scanning itinerary...");
+    if (!trip.locations?.length) return alert("Itinerary is empty!");
+    
+    aiChatWindow.style.display = 'flex'; 
+    aiToggleBtn.style.display = 'none';
+    
+    // Load memory first 
+    if (aiConversationHistory.length === 0) await loadChatHistory();
+    
+    appendMessage("assistant", "🔍 Scanning itinerary...");
     try {
-        const response = await fetch("/.netlify/functions/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tripData: trip }) });
-        if (!response.ok) return appendMessage("ai", "Analyzer error!");
-        appendMessage("ai", "📊 **ITINERARY ANALYSIS** 📊<br><br>" + (await response.json()).choices[0].message.content);
-    } catch { appendMessage("ai", "Analyzer offline!"); }
+        const response = await fetch("/.netlify/functions/analyze", { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify({ tripData: trip }) 
+        });
+        if (!response.ok) return appendMessage("assistant", "Analyzer error!");
+        
+        let analysisText = (await response.json()).choices[0].message.content;
+        let fullMsg = "📊 **ITINERARY ANALYSIS** 📊\n\n" + analysisText;
+        
+        // Push analysis into database so it's permanent 
+        await supabaseClient.from('trip_chats').insert({ trip_id: activeTripId, role: 'assistant', content: fullMsg });
+        aiConversationHistory.push({ role: "assistant", content: fullMsg });
+        
+        appendMessage("assistant", fullMsg);
+    } catch { 
+        appendMessage("assistant", "Analyzer offline!"); 
+    }
 });
 
 renderDashboard();
