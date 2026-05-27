@@ -752,6 +752,7 @@ function renderCategories() {
     let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
     localStorage.setItem('myMasterTrips', JSON.stringify(masterTripsArray));
     let allCatHTML = "";
+    let datalistHTML = "";
 
     for (let i = 0; i < currentTrip.categories.length; i++) {
         let cat = currentTrip.categories[i];
@@ -765,8 +766,13 @@ function renderCategories() {
                 <button id="cat-del-${i}" style="background-color: #ff4d4d; color: white; padding: 2px 6px; font-size: 12px; margin-left: 10px; border: none; border-radius: 3px; cursor: pointer;">delete</button>
             </li>
         `;
+        
+        datalistHTML += `<option value="${cat.name}">`; 
     }
     catContainer.innerHTML = allCatHTML;
+    
+    let datalist = document.getElementById('category-options');
+    if (datalist) datalist.innerHTML = datalistHTML;
 
     for (let i = 0; i < currentTrip.categories.length; i++) {
         document.getElementById(`cat-check-${i}`).addEventListener('change', function(e) {
@@ -950,6 +956,12 @@ addButton.addEventListener('click', async function() {
 
     let cleanDayNum = parseInt(dayInput) || 1;
     if (cleanDayNum > currentTrip.days) currentTrip.days = cleanDayNum;
+    
+    let catExists = currentTrip.categories.some(c => c.name.toLowerCase().trim() === categoryInput.toLowerCase().trim());
+    if (!catExists) {
+        currentTrip.categories.push({ name: categoryInput.trim(), checked: false });
+        renderCategories();
+    }
 
     let originalBtnText = addButton.innerText;
     addButton.innerText = "fetching map & images..."; addButton.disabled = true;

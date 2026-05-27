@@ -185,7 +185,8 @@
                         <p class="input-label" style="font-size: 11px; margin: 0 0 2px 2px; opacity: 0.7; color: var(--text-color);">Day #</p>
                         <input type="number" id="new-day" placeholder="ex. 1" min="1" value="1" style="width: 100%;">
                     </div>
-                    <input type="text" id="new-category" placeholder="category" style="flex: 1; min-width: 100px;">
+                    <input type="text" id="new-category" list="category-options" placeholder="category" autocomplete="off" style="flex: 1; min-width: 100px;">
+                    <datalist id="category-options"></datalist>
                     <input type="text" id="new-notes" placeholder="notes" style="flex: 2; min-width: 200px;">
                     <input type="number" id="new-price" placeholder="price ($)" style="width: 80px;">
                     <button id="add-btn" style="background-color: var(--success-color); color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">save location</button>
