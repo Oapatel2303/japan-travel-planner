@@ -204,6 +204,7 @@
                         <button class="route-btn route-btn-active" data-mode="car">🚗 Car</button>
                         <button class="route-btn" data-mode="foot">🚶 Walk</button>
                         <button class="route-btn" data-mode="bike">🚲 Bike</button>
+                        <button id="btn-hyperlapse" style="background: linear-gradient(135deg, #ff4081, #57020277); color: white; border: none; padding: 8px 12px; font-weight: bold; cursor: pointer; border-left: 2px solid var(--border-color);">🎥 Play Route</button>
                     </div>
                     <div id="map"></div>
                 </div>
@@ -248,9 +249,33 @@
             <button id="lightbox-close" style="margin-top: 20px; padding: 10px 20px; background: transparent; color: white; border: 1px solid rgba(255,255,255,0.5); border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;">Close Image</button>
         </div>
 
+        <div id="hyperlapse-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(10px);">
+            <h3 id="hyperlapse-status" style="color: var(--accent-color); margin-bottom: 15px; font-family: monospace;">Buffering Engine...</h3>
+            
+            <canvas id="hyperlapse-canvas" width="600" height="400" style="border-radius: 8px 8px 0 0; box-shadow: 0 10px 50px rgba(33, 150, 243, 0.4); max-width: 90%; border: 1px solid rgba(255,255,255,0.1); border-bottom: none;"></canvas>
+            
+            <div id="hyperlapse-controls" style="display: none; width: 600px; max-width: 90%; background: #1a1a1a; padding: 12px 15px; border-radius: 0 0 8px 8px; border: 1px solid rgba(255,255,255,0.1); align-items: center; gap: 15px; box-sizing: border-box;">
+                
+                <button id="hl-play-pause" style="background: transparent; color: white; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 30px;">⏸</button>
+                
+                <input type="range" id="hl-scrubber" min="0" max="60" value="0" style="flex: 1; cursor: pointer; accent-color: var(--accent-color);">
+                
+                <select id="hl-speed" style="background: #333; color: white; border: 1px solid #555; border-radius: 4px; padding: 4px 8px; font-size: 13px; cursor: pointer;">
+                    <option value="0.5">0.5x</option>
+                    <option value="0.75">0.75x</option>
+                    <option value="1" selected>1x (Normal)</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                </select>
+            </div>
+            
+            <button id="hyperlapse-close" style="margin-top: 30px; padding: 10px 25px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 30px; cursor: pointer; font-weight: bold; transition: all 0.2s;">Close Player</button>
+        </div>
+
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
         <script src="script.js"></script>
 </body>
 </html>

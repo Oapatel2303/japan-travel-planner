@@ -1407,4 +1407,237 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
     }
 });
 
+// ==========================================
+// ENGINE 10: HYPERLAPSE (MATH & CACHE)
+// ==========================================
+
+function generateRouteFingerprint(trip) {
+    // Grab only valid locations
+    let visibleSpots = trip.locations.filter(spot => spot.lat && spot.lng);
+    visibleSpots.sort((a, b) => a.day - b.day);
+    
+    // Create string of coords
+    return visibleSpots.map(spot => `${spot.lat.toFixed(5)},${spot.lng.toFixed(5)}`).join('|');
+}
+
+function sliceRouteIntoFrames(rawCoordinates) {
+    console.log("1. Starting spatial math on route...");
+    
+    const routeLine = turf.lineString(rawCoordinates);
+    const totalDistance = turf.length(routeLine, { units: 'kilometers' });
+    
+    // spread exactly 60 frames across the route
+    const frameCount = 60;
+    const frameSpacing = totalDistance / frameCount; 
+    
+    let cameraFrames = [];
+
+    // Loop through line and slice it
+    for (let i = 0; i < totalDistance; i += frameSpacing) {
+        if (cameraFrames.length >= frameCount) break; 
+
+        // Find the exact GPS coordinate at this distance
+        let currentPoint = turf.along(routeLine, i, { units: 'kilometers' });
+        
+        // Look down the road to figure out which way to point camera
+        let nextPoint = turf.along(routeLine, Math.min(i + 0.01, totalDistance), { units: 'kilometers' });
+        let compassHeading = turf.bearing(currentPoint, nextPoint);
+        
+        cameraFrames.push({
+            lng: currentPoint.geometry.coordinates[0],
+            lat: currentPoint.geometry.coordinates[1],
+            heading: compassHeading
+        });
+    }
+    
+    console.log(`2. Successfully sliced route into ${cameraFrames.length} evenly spaced frames.`);
+    return cameraFrames;
+}
+
+function debugHyperlapseFrames(frames, urls) {
+    console.log("🐛 DEBUG MODE: Plotting camera frames on the map...");
+    
+    frames.forEach((frame, index) => {
+        const el = document.createElement('div');
+        el.style.width = '8px';
+        el.style.height = '8px';
+        el.style.backgroundColor = '#ff0044';
+        el.style.borderRadius = '50%';
+        el.style.border = '1px solid white';
+        el.style.cursor = 'pointer';
+
+        const popup = new mapboxgl.Popup({ offset: 10 }).setHTML(`
+            <div style="text-align: center; color: black;">
+                <b style="font-size: 12px;">Frame ${index + 1}</b>
+                <p style="font-size: 10px; color: gray; margin: 2px 0;">Heading: ${Math.round(frame.heading)}°</p>
+                <a href="${urls[index]}" target="_blank" style="font-size: 10px; color: #2196F3; text-decoration: underline;">Open Raw Image</a>
+            </div>
+        `);
+
+        new mapboxgl.Marker(el)
+            .setLngLat([frame.lng, frame.lat])
+            .setPopup(popup)
+            .addTo(myMap);
+    });
+}
+
+document.getElementById('btn-hyperlapse').addEventListener('click', async () => {
+    if (!activeTripId) return;
+    let currentTrip = masterTripsArray.find(t => t.id === activeTripId);
+
+    const mapSource = myMap.getSource('route');
+    if (!mapSource || !mapSource._data.geometry) {
+        alert("Please let the map generate a route line first!");
+        return;
+    }
+
+    let currentFingerprint = generateRouteFingerprint(currentTrip);
+    let savedCache = JSON.parse(localStorage.getItem('hyperlapseCache') || '{}');
+
+    if (savedCache.fingerprint === currentFingerprint && savedCache.imageUrls) {
+        console.log("🟢 CACHE HIT! Playing video from memory...");
+        playHyperlapse(savedCache.imageUrls);
+        return;
+    }
+
+    console.log("🔴 CACHE MISS! Route is new or updated. Running math engine...");
+    const rawMapboxCoords = mapSource._data.geometry.coordinates;
+    let newFrames = sliceRouteIntoFrames(rawMapboxCoords);
+    
+    console.log("3. Sending coordinates to Google Cloud...");
+    try {
+        const response = await fetch("/.netlify/functions/hyperlapse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ frames: newFrames })
+        });
+
+        if (!response.ok) throw new Error("Backend failed to process frames");
+        
+        const data = await response.json();
+        console.log("4. Successfully received image URLs!");
+
+        localStorage.setItem('hyperlapseCache', JSON.stringify({
+            fingerprint: currentFingerprint,
+            frames: newFrames,
+            imageUrls: data.urls 
+        }));
+
+        console.log("🟢 NEW CACHE SAVED! Starting video...");
+        debugHyperlapseFrames(newFrames, data.urls);
+        playHyperlapse(data.urls);
+
+    } catch (error) {
+        console.error("Hyperlapse Generation Failed:", error);
+        alert("Failed to generate hyperlapse images.");
+    }
+});
+
+// ==========================================
+// ENGINE 11: CANVAS MEDIA PLAYER
+// ==========================================
+let hlTimeout;
+let isPlaying = true;
+let playbackSpeed = 1;
+let currentFrame = 0;
+let loadedImages = [];
+
+async function playHyperlapse(urls) {
+    const modal = document.getElementById('hyperlapse-modal');
+    const canvas = document.getElementById('hyperlapse-canvas');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('hyperlapse-status');
+    const controlBar = document.getElementById('hyperlapse-controls');
+    const scrubber = document.getElementById('hl-scrubber');
+    
+    // Reset state for new video
+    isPlaying = true;
+    currentFrame = 0;
+    loadedImages = [];
+    let loadedCount = 0;
+    document.getElementById('hl-play-pause').innerText = "⏸";
+    scrubber.max = urls.length - 1;
+    scrubber.value = 0;
+    
+    modal.style.display = 'flex';
+    controlBar.style.display = 'none'; 
+    statusText.innerText = `Downloading ${urls.length} frames...`;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 1. PRELOAD PHASE
+    for (let i = 0; i < urls.length; i++) {
+        let img = new Image();
+        img.src = urls[i];
+        
+        img.onload = () => {
+            loadedCount++;
+            statusText.innerText = `Buffering: ${Math.floor((loadedCount / urls.length) * 100)}%`;
+            if (loadedCount === urls.length) startPlayback();
+        };
+        img.onerror = () => {
+            loadedCount++;
+            if (loadedCount === urls.length) startPlayback();
+        }
+        loadedImages.push(img);
+    }
+
+    // 2. PLAYBACK PHASE 
+    function startPlayback() {
+        statusText.innerText = "▶ Cinematic Mode Active";
+        controlBar.style.display = 'flex'; 
+        
+        if (hlTimeout) clearTimeout(hlTimeout);
+        loop();
+    }
+
+    window.drawSingleFrame = function() {
+        if (loadedImages[currentFrame] && loadedImages[currentFrame].complete && loadedImages[currentFrame].naturalHeight !== 0) {
+            ctx.drawImage(loadedImages[currentFrame], 0, 0, canvas.width, canvas.height);
+        }
+        scrubber.value = currentFrame;
+    };
+
+    function loop() {
+        if (!isPlaying) return; 
+        
+        window.drawSingleFrame();
+        currentFrame++;
+        
+        if (currentFrame >= loadedImages.length) {
+            currentFrame = 0; 
+        }
+        
+        let dynamicDelay = 100 / playbackSpeed;
+        
+        clearTimeout(hlTimeout);
+        hlTimeout = setTimeout(loop, dynamicDelay); 
+    }
+
+    // --- UI EVENT LISTENERS ---
+    
+    // Play/Pause Toggle
+    document.getElementById('hl-play-pause').onclick = function() {
+        isPlaying = !isPlaying;
+        this.innerText = isPlaying ? "⏸" : "▶";
+        if (isPlaying) loop();
+    };
+
+    scrubber.oninput = function(e) {
+        isPlaying = false;
+        document.getElementById('hl-play-pause').innerText = "▶";
+        currentFrame = parseInt(e.target.value);
+        window.drawSingleFrame(); 
+    };
+
+    document.getElementById('hl-speed').onchange = function(e) {
+        playbackSpeed = parseFloat(e.target.value);
+    };
+}
+
+document.getElementById('hyperlapse-close').addEventListener('click', () => {
+    document.getElementById('hyperlapse-modal').style.display = 'none';
+    isPlaying = false;
+    if (hlTimeout) clearTimeout(hlTimeout);
+});
+
 renderDashboard();
