@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Travel Planner</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232196F3'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link id="flatpickr-theme" rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -59,7 +59,11 @@
                 <div class="modal-inputs">
                     <input type="text" id="modal-trip-name" placeholder="trip name (ex. kyoto fall)">
                     <input type="text" id="modal-trip-dates" placeholder="dates (ex. nov 2026)">
-                    <input type="text" id="modal-trip-dest" placeholder="destination country (ex. japan)">
+                    <p class="input-label" style="margin-top: 10px;">Destination City/Region</p>
+                    <div style="position: relative;">
+                        <input type="text" id="modal-trip-dest" placeholder="ex. Seattle, Washington" autocomplete="off" style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; box-sizing: border-box; border: 1px solid var(--input-border); color: var(--text-color); background: var(--input-bg);">
+                        <div id="dest-autocomplete-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: var(--shadow-color); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                    </div>
                     <p class="input-label">categories of interest (comma separated):</p>
                     <input type="text" id="modal-trip-cats" placeholder="ex. shrines, vegan food, arcades">
                 </div>
@@ -152,8 +156,11 @@
         
         <div class="mobile-stack" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
             <div>
-                <h2 id="current-trip-title" style="color: var(--accent-color);">loading trip...</h2>
-                <h3 id="budget-display" style="color: var(--success-color); margin-top: 0; margin-bottom: 0;">total spending: $0</h3>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <h2 id="current-trip-title" style="color: var(--accent-color); margin: 0;">loading trip...</h2>
+                    <button id="btn-edit-trip" style="background: transparent; color: gray; border: none; cursor: pointer; font-size: 18px; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='gray'">⚙️</button>
+                </div>
+                <h3 id="budget-display" style="color: var(--success-color); margin-top: 5px; margin-bottom: 0;">total spending: $0</h3>
             </div>
             <div style="display: flex; gap: 15px;">
                 <div style="background-color: var(--card-bg); border: 2px dashed var(--border-color); border-radius: 8px; padding: 10px 20px; min-width: 220px; text-align: left; transition: all 0.3s ease;">
@@ -178,9 +185,16 @@
                 <ul id="categories-container" style="list-style-type: none; padding-left: 0;"></ul>
                 <hr>
 
-                <h2>add/edit location to schedule</h2>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                    <h2 style="margin: 0;">add/edit location to schedule</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-open-lodging" style="background: var(--accent-color); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">🏨 Add Lodging</button>
+                        <button id="btn-open-flight" style="background: #1e1e1e; color: white; border: 1px solid #333; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">✈️ Add Flight</button>
+                    </div>
+                </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: flex-end;">
-                    <input type="text" id="new-name" placeholder="location name" style="flex: 1.5; min-width: 150px;">
+                    <input type="text" id="new-name" placeholder="Location Name" autocomplete="off">
+                    <div id="autocomplete-results" style="display: none; position: absolute; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: var(--shadow-color); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
                     <div style="width: 70px;">
                         <p class="input-label" style="font-size: 11px; margin: 0 0 2px 2px; opacity: 0.7; color: var(--text-color);">Day #</p>
                         <input type="number" id="new-day" placeholder="ex. 1" min="1" value="1" style="width: 100%;">
@@ -244,6 +258,90 @@
             <button id="btn-close-collab" style="width: 100%; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; cursor: pointer;">Close</button>
         </div>
 
+        <div id="lodging-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 9999; width: 340px;">
+            <h3 style="margin-top: 0; color: var(--accent-color);">Add Lodging</h3>
+            
+            <div style="position: relative; margin-bottom: 15px;">
+                <input type="text" id="lodging-name" placeholder="Search Hotel or Airbnb..." autocomplete="off" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+                <div id="lodging-autocomplete-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: var(--shadow-color); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <p class="input-label" style="font-size: 11px; margin: 0 0 5px 0;">Check-in (Day #)</p>
+                    <input type="number" id="lodging-start" value="1" min="1" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+                </div>
+                <div style="flex: 1;">
+                    <p class="input-label" style="font-size: 11px; margin: 0 0 5px 0;">Check-out (Day #)</p>
+                    <input type="number" id="lodging-end" value="2" min="1" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+                </div>
+            </div>
+            
+            <input type="number" id="lodging-cost" placeholder="Total Cost ($)" style="width: 100%; margin-bottom: 20px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+
+            <div style="display: flex; justify-content: space-between;">
+                <button id="btn-close-lodging" style="background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                <button id="btn-save-lodging" style="background: var(--success-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Save Lodging</button>
+            </div>
+        </div>
+
+        <div id="flight-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 9999; width: 340px;">
+            <h3 style="margin-top: 0; color: var(--text-color);">Flight Tracker</h3>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <p class="input-label">Direction</p>
+                    <select id="flight-direction" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                        <option value="arrival">Arrival (Locks to Day 1)</option>
+                        <option value="departure">Departure (Locks to End)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <p class="input-label">Flight # (ex. DL 123)</p>
+                    <input type="text" id="flight-number" placeholder="DL 123" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+                </div>
+                <div style="flex: 1;">
+                    <p class="input-label">Cost ($)</p>
+                    <input type="number" id="flight-cost" placeholder="0.00" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="position: relative; margin-bottom: 25px;">
+                <p class="input-label">Search Airport</p>
+                <input type="text" id="flight-airport" placeholder="ex. SeaTac, Haneda..." autocomplete="off" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+                <div id="flight-autocomplete-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: var(--shadow-color); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between;">
+                <button id="btn-close-flight" style="background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                <button id="btn-save-flight" style="background: var(--text-color); color: var(--bg-color); border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Save Flight</button>
+            </div>
+        </div>
+
+        <div id="edit-trip-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 9999; width: 340px;">
+            <h3 style="margin-top: 0; color: var(--accent-color);">Trip Settings</h3>
+            
+            <p class="input-label">Trip Name</p>
+            <input type="text" id="edit-trip-name" style="width: 100%; margin-bottom: 15px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+            
+            <p class="input-label">Travel Dates</p>
+            <input type="text" id="edit-trip-dates" placeholder="Select dates..." style="width: 100%; margin-bottom: 15px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+            
+            <p class="input-label">Destination Region</p>
+            <div style="position: relative; margin-bottom: 25px;">
+                <input type="text" id="edit-trip-dest" autocomplete="off" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box;">
+                <div id="edit-dest-autocomplete" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: var(--shadow-color); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between;">
+                <button id="btn-close-edit-trip" style="background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                <button id="btn-save-edit-trip" style="background: var(--success-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Save Changes</button>
+            </div>
+        </div>
+
         <div id="lightbox-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px);">
             <img id="lightbox-img" src="" style="max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
             <button id="lightbox-close" style="margin-top: 20px; padding: 10px 20px; background: transparent; color: white; border: 1px solid rgba(255,255,255,0.5); border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;">Close Image</button>
@@ -276,6 +374,7 @@
         <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         <script src="script.js"></script>
 </body>
 </html>

@@ -179,6 +179,16 @@ input {
     box-shadow: 0 4px 12px var(--shadow-color);
 }
 
+/* Drag & Drop Styles */
+.sortable-ghost {
+    opacity: 0.4;
+    border: 2px dashed var(--accent-color) !important;
+    background: rgba(33, 150, 243, 0.1) !important;
+}
+.drag-handle:hover {
+    color: white !important;
+}
+
 /* ==========================================
    5. MOBILE RESPONSIVENESS
    ========================================== */
